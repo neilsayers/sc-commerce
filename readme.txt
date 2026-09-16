@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.8.0
+Stable tag: 0.8.1
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -45,7 +45,7 @@ locked out for the type) — only ever via Orders\Order::create(). The checkout 
 (line 1, line 2, town, county, postcode — no country field yet, every order gets a fixed "GB") plus optional order
 notes, all stored on the order alongside its line items. Name, email, address line 1, town and postcode are required
 and validated server-side (postcode against a UK postcode shape), not just via the form's own HTML attributes. The
-Orders list colour-codes each row by status (a subtle left accent), and an order stuck on "Payment Pending" for a
+Orders list shows each order's status as a colour-coded pill, and an order stuck on "Payment Pending" for a
 month is automatically moved to "Cancelled" by a daily WP-Cron job (Orders\StaleOrderCleaner) — left for an admin
 to trash by hand, nothing deletes the order itself. A free-text tracking code field on the order can be filled in
 by hand once a parcel goes out; there's no carrier integration (or automatic "delivered" detection) yet.
@@ -102,6 +102,10 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.8.1 =
+* Reworked the Orders list's status colour-coding: instead of a left accent on the row, the Status cell itself
+  now shows a pill — an 8px dot in the status colour, on a background tinted 5% with that same colour.
 
 = 0.8.0 =
 * Fixed product permalinks 404ing ("Page not found") after the product post type's registration changed without an

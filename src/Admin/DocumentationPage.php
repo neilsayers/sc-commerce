@@ -223,8 +223,8 @@ final class DocumentationPage implements Hookable
             abandoned/failed attempts are captured too. Manage orders under the <strong>Orders</strong> menu;
             status only ever moves forward automatically via
             PayPal's IPN callback (see Payments below), except Dispatched, which is always set by hand once a
-            parcel actually goes out. The Orders list colour-codes each row by status (a subtle left accent) so
-            they can be scanned without reading every Status cell.
+            parcel actually goes out. The Status column shows each order's status as a colour-coded pill (a small
+            dot plus a tinted background) so the list can be scanned without reading every cell's text.
         </p>
         <table class="widefat striped" style="max-width: 500px;">
             <thead><tr><th>Status</th></tr></thead>
