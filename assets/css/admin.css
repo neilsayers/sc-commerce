@@ -14,3 +14,15 @@
 	text-align: left;
 	border-bottom: 1px solid #ddd;
 }
+
+.scc-docs-code {
+	max-width: 900px;
+	padding: 12px 16px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	overflow-x: auto;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 13px;
+	line-height: 1.6;
+}

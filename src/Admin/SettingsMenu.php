@@ -5,8 +5,23 @@ namespace SCCommerce\Admin;
 use SCCommerce\Contracts\Hookable;
 use SCCommerce\Settings\Settings;
 
-final class SettingsPage implements Hookable
+/**
+ * A top-level "SC Commerce" menu, separate from the Products post
+ * type's own menu — settings aren't a kind of product, so they don't
+ * belong nested under Products -> Settings. Sits near the bottom of
+ * the admin menu (position 94) alongside this site's other sc-*
+ * plugins (Event Types 90, Room Bookings 91, Maps 92, SEO 93).
+ *
+ * Two settings sections rather than one flat list: "General"
+ * (currency) and "PayPal" (business email, sandbox mode) — the
+ * section title is what actually draws the visual divider between
+ * them (WordPress's own Settings API renders each add_settings_section()
+ * as its own <h2> + fields table), not a custom <hr>.
+ */
+final class SettingsMenu implements Hookable
 {
+    public const PAGE_SLUG = 'scc-settings';
+
     public function register(): void
     {
         \add_action('admin_menu', [$this, 'addMenu']);
@@ -15,12 +30,22 @@ final class SettingsPage implements Hookable
 
     public function addMenu(): void
     {
+        \add_menu_page(
+            'SC Commerce',
+            'SC Commerce',
+            'manage_options',
+            self::PAGE_SLUG,
+            [$this, 'render'],
+            'dashicons-store',
+            94
+        );
+
         \add_submenu_page(
-            'edit.php?post_type=scc_product',
+            self::PAGE_SLUG,
             'SC Commerce Settings',
             'Settings',
             'manage_options',
-            'scc-settings',
+            self::PAGE_SLUG,
             [$this, 'render']
         );
     }
@@ -33,11 +58,22 @@ final class SettingsPage implements Hookable
             'default' => Settings::defaults(),
         ]);
 
-        \add_settings_section('scc_general', 'General', '__return_false', 'scc-settings');
-
+        \add_settings_section('scc_general', 'General', '__return_false', self::PAGE_SLUG);
         $this->addField('currency', 'Currency code', 'scc_general', 'text');
-        $this->addField('paypal_email', 'PayPal business email', 'scc_general', 'email');
-        $this->addField('paypal_sandbox', 'Use PayPal sandbox', 'scc_general', 'checkbox');
+
+        \add_settings_section(
+            'scc_paypal',
+            'PayPal',
+            function (): void {
+                // do_settings_sections() calls this and prints nothing
+                // itself — it expects the callback to echo directly,
+                // not return a string.
+                echo '<p>PayPal Standard — no API keys needed, just a business email address. See SC Commerce -> Documentation for other payment options.</p>';
+            },
+            self::PAGE_SLUG
+        );
+        $this->addField('paypal_email', 'Business email', 'scc_paypal', 'email');
+        $this->addField('paypal_sandbox', 'Use sandbox mode', 'scc_paypal', 'checkbox');
     }
 
     private function addField(string $key, string $label, string $section, string $type): void
@@ -63,7 +99,7 @@ final class SettingsPage implements Hookable
                 \esc_attr($name),
                 \esc_attr((string) $value)
             );
-        }, 'scc-settings', $section);
+        }, self::PAGE_SLUG, $section);
     }
 
     /**
@@ -96,7 +132,7 @@ final class SettingsPage implements Hookable
             <form method="post" action="options.php">
                 <?php
                 \settings_fields('scc_settings_group');
-                \do_settings_sections('scc-settings');
+                \do_settings_sections(self::PAGE_SLUG);
                 \submit_button();
                 ?>
             </form>

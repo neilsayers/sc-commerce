@@ -6,9 +6,19 @@
  * consumer) — deliberately not namespaced, since a theme shouldn't
  * need a `use` statement just to print a Buy Now button. Each one is a
  * thin wrapper over the real logic in src/, which is namespaced.
+ *
+ * Every one of these is also the *only* implementation behind the
+ * matching shortcode (Frontend\Shortcodes) — [scc_product] calls
+ * scc_the_product(), [scc_basket] calls scc_the_basket(), and so on.
+ * A shortcode is just this function wrapped in ob_start()/ob_get_clean(),
+ * so a theme using the function directly and an editor using the
+ * shortcode in a page's content always render identically. See
+ * Admin\DocumentationPage for the full reference.
  */
 
 use SCCommerce\Basket\Basket;
+use SCCommerce\Orders\Order;
+use SCCommerce\PostTypes\OrderPostType;
 use SCCommerce\Products\Product;
 use SCCommerce\Settings\Settings;
 use SCCommerce\Support\Money;
@@ -16,6 +26,69 @@ use SCCommerce\Support\Money;
 function scc_price(float $amount, ?string $currency = null): string
 {
     return Money::format($amount, $currency ?? (new Settings())->currency());
+}
+
+/**
+ * A product card: image, name (linked to its own page), excerpt and
+ * its buy box (scc_the_product_buy_box()) — enough to drop a single
+ * product anywhere via [scc_product id="123"] or this function
+ * directly, e.g. in a "related products" loop. The product's own
+ * single-view page (Frontend\ProductContent) only needs the buy box,
+ * not the whole card, since the theme already rendered the title/
+ * content there.
+ */
+function scc_the_product(int $productId): void
+{
+    $product = Product::get($productId);
+
+    if (! $product) {
+        return;
+    }
+    ?>
+    <div class="scc-product">
+        <?php if (has_post_thumbnail($productId)) : ?>
+            <a href="<?php echo esc_url($product->permalink()); ?>"><?php echo get_the_post_thumbnail($productId, 'medium'); ?></a>
+        <?php endif; ?>
+        <h2 class="scc-product-name"><a href="<?php echo esc_url($product->permalink()); ?>"><?php echo esc_html($product->name()); ?></a></h2>
+        <?php
+        $excerpt = get_the_excerpt($productId);
+
+        if ($excerpt !== '') :
+            ?>
+            <div class="scc-product-excerpt"><?php echo wp_kses_post($excerpt); ?></div>
+        <?php endif; ?>
+        <?php scc_the_product_buy_box($productId); ?>
+    </div>
+    <?php
+}
+
+/**
+ * Price plus Buy Now/Add to Basket — the part of a product's display
+ * that actually depends on live data (price, stock, variations) rather
+ * than editorial content, so it's kept separate from scc_the_product()
+ * for pages (like the product's own single view) that already render
+ * the name/image/excerpt themselves via the normal post content.
+ */
+function scc_the_product_buy_box(int $productId): void
+{
+    $product = Product::get($productId);
+
+    if (! $product) {
+        return;
+    }
+    ?>
+    <div class="scc-product-buy-box">
+        <p class="scc-product-price"><?php echo esc_html($product->displayPrice((new Settings())->currency())); ?></p>
+        <?php if (! $product->isVariable()) : ?>
+            <div class="scc-product-actions">
+                <?php scc_add_to_basket_button($productId); ?>
+                <?php scc_buy_now_button($productId); ?>
+            </div>
+        <?php else : ?>
+            <p><em>This product has options — variant selection isn't built into the testbed theme yet; see the plugin's Documentation page.</em></p>
+        <?php endif; ?>
+    </div>
+    <?php
 }
 
 /**
@@ -70,6 +143,154 @@ function scc_add_to_basket_button(int $productId, ?int $variation = null, string
         <button type="submit" class="scc-add-to-basket"><?php echo esc_html($label); ?></button>
     </form>
     <?php
+}
+
+/**
+ * The full basket table (with per-row update/remove forms and a
+ * "Proceed to checkout" link) — what [scc_basket] renders, and what
+ * Setup\Activator's auto-created "Basket" page contains via that
+ * shortcode. Call this directly instead if a theme wants the basket
+ * on a page template rather than through the shortcode.
+ */
+function scc_the_basket(): void
+{
+    $basket = Basket::forCurrentVisitor();
+
+    if ($basket->isEmpty()) {
+        echo '<p class="scc-basket-empty">Your basket is empty.</p>';
+
+        return;
+    }
+    ?>
+    <table class="scc-basket-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Line total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($basket->enrichedItems() as $item) : ?>
+                <tr>
+                    <td>
+                        <a href="<?php echo esc_url($item['product']->permalink()); ?>"><?php echo esc_html($item['product']->name()); ?></a>
+                        <?php if ($item['variation'] !== null) : $variation = $item['product']->variation($item['variation']); ?>
+                            <br><small><?php echo esc_html($variation['label'] ?? ''); ?></small>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="scc-basket-update-form" data-scc-product="<?php echo esc_attr($item['product']->id()); ?>">
+                            <?php wp_nonce_field('scc_basket_update'); ?>
+                            <input type="hidden" name="action" value="scc_basket_update">
+                            <input type="hidden" name="product_id" value="<?php echo esc_attr($item['product']->id()); ?>">
+                            <input type="hidden" name="redirect_to" value="<?php echo esc_url(scc_basket_url()); ?>">
+                            <?php if ($item['variation'] !== null) : ?>
+                                <input type="hidden" name="variation" value="<?php echo esc_attr($item['variation']); ?>">
+                            <?php endif; ?>
+                            <input type="number" name="quantity" value="<?php echo esc_attr($item['quantity']); ?>" min="1" style="width:4em;">
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                    <td><?php echo esc_html(scc_price($item['line_total'])); ?></td>
+                    <td>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="scc-basket-remove-form" data-scc-product="<?php echo esc_attr($item['product']->id()); ?>">
+                            <?php wp_nonce_field('scc_basket_remove'); ?>
+                            <input type="hidden" name="action" value="scc_basket_remove">
+                            <input type="hidden" name="product_id" value="<?php echo esc_attr($item['product']->id()); ?>">
+                            <input type="hidden" name="redirect_to" value="<?php echo esc_url(scc_basket_url()); ?>">
+                            <?php if ($item['variation'] !== null) : ?>
+                                <input type="hidden" name="variation" value="<?php echo esc_attr($item['variation']); ?>">
+                            <?php endif; ?>
+                            <button type="submit">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2" style="text-align:right;">Total</th>
+                <th><?php echo esc_html(scc_price($basket->total())); ?></th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+    <p><a href="<?php echo esc_url(scc_checkout_url()); ?>" class="scc-proceed-to-checkout">Proceed to checkout</a></p>
+    <?php
+}
+
+/**
+ * The checkout form, plus (via query string, once a customer's been
+ * redirected here — from a gateway or from CheckoutController::checkout())
+ * order status/notice messaging. The same page doubles as the "payment
+ * accepted"/"we'll be in touch" confirmation screen: there's no
+ * separate "complete" page, since the meaningful state to show is
+ * always this order's current status, and PayPalIpnListener is what
+ * actually keeps that status current in the background.
+ */
+function scc_the_checkout(): void
+{
+    scc_the_checkout_notices();
+
+    $basket = Basket::forCurrentVisitor();
+
+    if ($basket->isEmpty() && empty($_GET['scc_order'])) {
+        echo '<p class="scc-basket-empty">Your basket is empty. <a href="'.esc_url(home_url('/')).'">Continue shopping</a>.</p>';
+
+        return;
+    }
+
+    if ($basket->isEmpty()) {
+        return;
+    }
+    ?>
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="scc-checkout-form">
+        <?php wp_nonce_field('scc_checkout'); ?>
+        <input type="hidden" name="action" value="scc_checkout">
+        <p>
+            <label>Name<br><input type="text" name="customer_name" required></label>
+        </p>
+        <p>
+            <label>Email<br><input type="email" name="customer_email" required></label>
+        </p>
+        <p><strong>Total: <?php echo esc_html(scc_price($basket->total())); ?></strong></p>
+        <button type="submit" class="scc-place-order">Pay with PayPal</button>
+    </form>
+    <?php
+}
+
+function scc_the_checkout_notices(): void
+{
+    if (! empty($_GET['scc_notice'])) {
+        $notice = sanitize_key($_GET['scc_notice']);
+        $messages = [
+            'empty' => 'There was nothing to check out.',
+            'no_gateway' => 'Thanks — your order has been recorded, but online payment isn\'t set up on this site yet. We\'ll be in touch to arrange payment.',
+        ];
+
+        if (isset($messages[$notice])) {
+            echo '<p class="scc-notice">'.esc_html($messages[$notice]).'</p>';
+        }
+    }
+
+    if (empty($_GET['scc_order'])) {
+        return;
+    }
+
+    $order = Order::get((int) $_GET['scc_order']);
+
+    if (! $order) {
+        return;
+    }
+
+    $label = OrderPostType::STATUSES[$order->status()] ?? $order->status();
+    echo '<p class="scc-order-status">Order #'.esc_html((string) $order->id()).' — status: '.esc_html($label).'</p>';
+
+    if ($order->status() === OrderPostType::STATUS_PAYMENT_PENDING && ($_GET['scc_paypal'] ?? '') === 'return') {
+        echo '<p class="scc-notice">We\'re waiting for confirmation from PayPal — this page will show "Paid" once that arrives, usually within a few seconds.</p>';
+    }
 }
 
 function scc_basket_count(): int

@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -62,14 +62,35 @@ Contracts\PaymentGateway implementation:
 * **GoCardless** — direct debit rather than card/PayPal balance; free to integrate, better suited to
   recurring/subscription products than one-off orders.
 
+== Product data: three ways in ==
+
+* **PHP template functions** (`scc_the_product()`, `scc_the_product_buy_box()`, `scc_add_to_basket_button()`,
+  `scc_buy_now_button()`, `scc_the_basket()`, `scc_the_checkout()`, ...) — for theme code on this same site.
+* **Shortcodes** (`[scc_product]`, `[scc_add_to_basket]`, `[scc_buy_now]`, `[scc_basket]`, `[scc_checkout]`) — for
+  post/page content. Each one is a one-line wrapper around the matching function above, not a second implementation,
+  so the two can never render differently.
+* **REST API** (`GET /wp-json/scc/v1/products`, `GET /wp-json/scc/v1/products/{id}`) — for anything outside this
+  site's own PHP. Public, read-only, versioned.
+
+Full reference (attributes, query params, response shape) lives on the in-dashboard SC Commerce → Documentation
+screen, not just here.
+
 == Installation ==
 
 1. Copy (or symlink) this plugin's folder into `wp-content/plugins/`.
 2. Activate it. This creates a Basket and Checkout page (each with the relevant shortcode) and a default settings row.
-3. Go to Products → Settings and enter a PayPal business email address (and toggle sandbox mode for testing).
+3. Go to SC Commerce → Settings and enter a PayPal business email address (and toggle sandbox mode for testing).
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.2.0 =
+* SC Commerce settings moved out from under Products into their own top-level admin menu, near the bottom of the
+  menu list — General and PayPal are now separate settings sections.
+* Added an in-dashboard Documentation screen (SC Commerce → Documentation).
+* Added `[scc_product]`, `[scc_add_to_basket]` and `[scc_buy_now]` shortcodes, and their matching
+  `scc_the_product()`/`scc_the_product_buy_box()` template functions.
+* Added a public products REST API (`GET /scc/v1/products`, `GET /scc/v1/products/{id}`).
 
 = 0.1.0 =
 * Initial scaffold: Product/Order post types, Product Types taxonomy, basket, checkout, PayPal Standard gateway, orders admin.

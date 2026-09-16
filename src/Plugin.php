@@ -2,14 +2,16 @@
 
 namespace SCCommerce;
 
+use SCCommerce\Admin\DocumentationPage;
 use SCCommerce\Admin\OrderListTable;
-use SCCommerce\Admin\SettingsPage;
+use SCCommerce\Admin\SettingsMenu;
 use SCCommerce\Basket\BasketMerger;
 use SCCommerce\Frontend\Assets;
 use SCCommerce\Frontend\BasketFormController;
 use SCCommerce\Frontend\BasketRestController;
 use SCCommerce\Frontend\CheckoutController;
 use SCCommerce\Frontend\ProductContent;
+use SCCommerce\Frontend\ProductsRestController;
 use SCCommerce\Frontend\Shortcodes;
 use SCCommerce\Gateways\PayPal\PayPalGateway;
 use SCCommerce\Gateways\PayPal\PayPalIpnListener;
@@ -60,10 +62,12 @@ final class Plugin
             $paypal,
             new CheckoutController($this->settings, $paypal),
             new PayPalIpnListener($this->settings),
+            new ProductsRestController(),
             new Shortcodes(),
             new ProductContent(),
             new Assets(),
-            new SettingsPage(),
+            new SettingsMenu(),
+            new DocumentationPage(),
         ];
 
         foreach ($features as $feature) {
