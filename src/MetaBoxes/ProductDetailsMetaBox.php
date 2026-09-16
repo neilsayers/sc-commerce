@@ -8,8 +8,8 @@ use SCCommerce\PostTypes\ProductPostType;
 /**
  * Price, SKU and pricing type for a product. The "Variable" option
  * and its variations repeater are provision for variable products,
- * not a full implementation — each row is just a label/price/SKU/image,
- * with no attribute system (e.g. Size x Colour) generating them
+ * not a full implementation — each row is just a label/price/SKU/image/
+ * description, with no attribute system (e.g. Size x Colour) generating them
  * automatically. That's deliberately out of scope for v1 (see the
  * README's "Variable products" section); the meta shape
  * (ProductPostType::META_VARIATIONS, a flat array of rows) is chosen
@@ -68,7 +68,7 @@ final class ProductDetailsMetaBox implements Hookable
         $sku = \get_post_meta($post->ID, ProductPostType::META_SKU, true);
         $type = \get_post_meta($post->ID, ProductPostType::META_TYPE, true) ?: ProductPostType::TYPE_SIMPLE;
         $variations = \get_post_meta($post->ID, ProductPostType::META_VARIATIONS, true);
-        $variations = \is_array($variations) && $variations !== [] ? $variations : [['label' => '', 'price' => '', 'sku' => '', 'image_id' => 0]];
+        $variations = \is_array($variations) && $variations !== [] ? $variations : [['label' => '', 'price' => '', 'sku' => '', 'image_id' => 0, 'description' => '']];
         ?>
         <p>
             <label for="scc_type"><strong>Product type</strong></label><br>
@@ -99,6 +99,7 @@ final class ProductDetailsMetaBox implements Hookable
                         <th>Label</th>
                         <th>Price</th>
                         <th>SKU</th>
+                        <th>Description</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -116,6 +117,7 @@ final class ProductDetailsMetaBox implements Hookable
                             <td><input type="text" name="scc_variations[<?php echo (int) $index; ?>][label]" value="<?php echo \esc_attr($variation['label'] ?? ''); ?>" placeholder="e.g. Large / Blue"></td>
                             <td><input type="number" step="0.01" min="0" name="scc_variations[<?php echo (int) $index; ?>][price]" value="<?php echo \esc_attr($variation['price'] ?? ''); ?>"></td>
                             <td><input type="text" name="scc_variations[<?php echo (int) $index; ?>][sku]" value="<?php echo \esc_attr($variation['sku'] ?? ''); ?>"></td>
+                            <td><textarea rows="2" name="scc_variations[<?php echo (int) $index; ?>][description]" placeholder="Shown on the product page when this variant is selected"><?php echo \esc_textarea($variation['description'] ?? ''); ?></textarea></td>
                             <td><button type="button" class="button scc-remove-variation">Remove</button></td>
                         </tr>
                     <?php endforeach; ?>
@@ -166,6 +168,7 @@ final class ProductDetailsMetaBox implements Hookable
                     'price' => (float) ($row['price'] ?? 0),
                     'sku' => \sanitize_text_field(\wp_unslash($row['sku'] ?? '')),
                     'image_id' => isset($row['image_id']) && $row['image_id'] !== '' ? \absint($row['image_id']) : 0,
+                    'description' => \sanitize_textarea_field(\wp_unslash($row['description'] ?? '')),
                 ];
             }
         }

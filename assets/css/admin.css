@@ -1,5 +1,6 @@
 #scc-variations-table input[type="text"],
-#scc-variations-table input[type="number"] {
+#scc-variations-table input[type="number"],
+#scc-variations-table textarea {
 	width: 100%;
 }
 

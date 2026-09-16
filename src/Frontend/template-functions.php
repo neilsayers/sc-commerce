@@ -165,14 +165,82 @@ function scc_the_product_buy_box(int $productId): void
     }
     ?>
     <div class="scc-product-buy-box">
-        <p class="scc-product-price"><?php echo esc_html($product->displayPrice((new Settings())->currency())); ?></p>
-        <?php if (! $product->isVariable()) : ?>
+        <?php if ($product->isVariable()) : ?>
+            <?php scc_the_variant_selector($product); ?>
+        <?php else : ?>
+            <p class="scc-product-price"><?php echo esc_html($product->displayPrice((new Settings())->currency())); ?></p>
             <div class="scc-product-actions">
                 <?php scc_add_to_basket_button($productId); ?>
             </div>
-        <?php else : ?>
-            <p><em>This product has options — variant selection isn't built into the testbed theme yet; see the plugin's Documentation page.</em></p>
         <?php endif; ?>
+    </div>
+    <?php
+}
+
+/**
+ * The variant picker for a variable product's buy box: a <select> of
+ * variation labels, an image/price/description preview beneath it,
+ * and the add-to-basket form for whichever variation is currently
+ * selected. assets/js/product-variant-selector.js swaps the preview
+ * and the form's hidden "variation" input as the selection changes —
+ * every variation's data is embedded once as JSON (data-scc-variations)
+ * rather than fetched per selection, since there's only ever a
+ * handful of them and they're already loaded with the page.
+ *
+ * Requires JavaScript to actually change selection; without it (or
+ * before it loads) the page still works, it just always adds the
+ * first variation — the same one the preview shows on load.
+ */
+function scc_the_variant_selector(Product $product): void
+{
+    $variations = $product->variations();
+
+    if ($variations === []) {
+        echo '<p><em>This product has no variations configured yet.</em></p>';
+
+        return;
+    }
+
+    $currency = (new Settings())->currency();
+    $productId = $product->id();
+
+    $payload = \array_map(
+        static function (array $variation, int $index) use ($currency): array {
+            return [
+                'index' => $index,
+                'price_formatted' => scc_price($variation['price'], $currency),
+                'image' => $variation['image_id'] ? \wp_get_attachment_image_url($variation['image_id'], 'large') : null,
+                'description' => $variation['description'],
+            ];
+        },
+        $variations,
+        \array_keys($variations)
+    );
+    $first = $payload[0];
+    ?>
+    <div class="scc-variant-selector" data-scc-variant-selector data-scc-variations="<?php echo esc_attr((string) wp_json_encode($payload)); ?>">
+        <p>
+            <label for="scc-variant-<?php echo esc_attr((string) $productId); ?>">Options</label><br>
+            <select id="scc-variant-<?php echo esc_attr((string) $productId); ?>" data-scc-variant-select>
+                <?php foreach ($variations as $index => $variation) : ?>
+                    <option value="<?php echo esc_attr((string) $index); ?>"><?php echo esc_html($variation['label']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+
+        <img class="scc-variant-image" data-scc-variant-image src="<?php echo $first['image'] ? esc_url($first['image']) : ''; ?>" alt="" style="<?php echo $first['image'] ? '' : 'display:none;'; ?>">
+
+        <p class="scc-product-price" data-scc-variant-price><?php echo esc_html($first['price_formatted']); ?></p>
+
+        <?php if ($first['description'] !== '') : ?>
+            <div class="scc-variant-description" data-scc-variant-description><?php echo esc_html($first['description']); ?></div>
+        <?php else : ?>
+            <div class="scc-variant-description" data-scc-variant-description style="display:none;"></div>
+        <?php endif; ?>
+
+        <div class="scc-product-actions">
+            <?php scc_add_to_basket_button($productId, 0); ?>
+        </div>
     </div>
     <?php
 }

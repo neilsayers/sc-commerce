@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.8.1
+Stable tag: 0.9.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -56,11 +56,14 @@ placed with no payment gateway configured, since that order will never reach "Pa
 
 == Variable products ==
 
-The "Variable" product type and its variations repeater (label/price/SKU/image per row) are provision, not a full
-implementation — there's no attribute system (e.g. Size × Colour generating rows automatically), and the testbed
-theme's product page doesn't yet render a variant picker (Frontend\ProductContent shows a placeholder note instead
-of an Add to Basket form for variable products). The meta shape (`_scc_variations`, a flat array of rows) is chosen
-so a future attribute-matrix UI can write to the same field without a data migration.
+The "Variable" product type and its variations repeater (label/price/SKU/image/description per row) are provision,
+not a full implementation — there's no attribute system (e.g. Size × Colour generating rows automatically), just a
+flat list of variations a shop owner fills in by hand. A product's own single-view page renders a variant picker
+(`scc_the_variant_selector()`, wired up by `assets/js/product-variant-selector.js`): choosing a variation swaps
+the shown image/price/description and points the Add to Basket form at that variation, no page reload or REST
+round trip, since all of a product's variations are already embedded on the page as JSON. The meta shape
+(`_scc_variations`, a flat array of rows) is chosen so a future attribute-matrix UI can write to the same field
+without a data migration.
 
 == Payments: why PayPal Standard, and what else is free ==
 
@@ -102,6 +105,14 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.9.0 =
+* A variable product's single-view page now has a real variant picker instead of a placeholder note — choosing an
+  option from the `<select>` swaps the shown image/price/description and points the Add to Basket form at that
+  variation, client-side (`assets/js/product-variant-selector.js`), no page reload or REST call. Requires
+  JavaScript to change selection; without it, Add to Basket still works but always adds the first variation.
+* Added a `description` field to each variation row (shown when that variation is selected) — exposed as
+  `description` on the REST API's `variations`, alongside the existing `image`.
 
 = 0.8.1 =
 * Reworked the Orders list's status colour-coding: instead of a left accent on the row, the Status cell itself

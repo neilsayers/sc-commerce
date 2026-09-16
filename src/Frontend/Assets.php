@@ -20,6 +20,10 @@ final class Assets implements Hookable
         // below (window.sccCommerce) is guaranteed to print first,
         // regardless of enqueue order — both scripts read it.
         \wp_enqueue_script('scc-order-status', SCC_URL.'assets/js/order-status.js', ['scc-basket'], SCC_VERSION, true);
+        // No dependency on scc-basket: this one only reads the variant
+        // data already embedded in the page's own markup and never
+        // touches window.sccCommerce/REST, unlike the two above.
+        \wp_enqueue_script('scc-product-variant-selector', SCC_URL.'assets/js/product-variant-selector.js', [], SCC_VERSION, true);
 
         $sccCommerce = [
             'restUrl' => \esc_url_raw(\rest_url('scc/v1/')),

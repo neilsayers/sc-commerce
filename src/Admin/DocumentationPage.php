@@ -185,7 +185,7 @@ final class DocumentationPage implements Hookable
   ],
   "total": 1
 }</pre>
-        <p class="description"><code>price</code> is <code>null</code> for a variable product — use <code>variations</code> (each with its own <code>price</code>/<code>price_formatted</code>/<code>image</code>, the last <code>null</code> if that variation has none) instead.</p>
+        <p class="description"><code>price</code> is <code>null</code> for a variable product — use <code>variations</code> (each with its own <code>price</code>/<code>price_formatted</code>/<code>image</code>/<code>description</code>, <code>image</code> <code>null</code> if that variation has none) instead.</p>
         <?php
     }
 

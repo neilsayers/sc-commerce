@@ -74,7 +74,7 @@ final class Product
     }
 
     /**
-     * @return array<int, array{label: string, price: float, sku: string, image_id: int}>
+     * @return array<int, array{label: string, price: float, sku: string, image_id: int, description: string}>
      */
     public function variations(): array
     {
@@ -90,6 +90,7 @@ final class Product
                 'price' => (float) ($variation['price'] ?? 0),
                 'sku' => (string) ($variation['sku'] ?? ''),
                 'image_id' => (int) ($variation['image_id'] ?? 0),
+                'description' => (string) ($variation['description'] ?? ''),
             ],
             $variations
         ));

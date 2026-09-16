@@ -36,6 +36,7 @@
 				'<td><input type="text" name="scc_variations[' + index + '][label]" placeholder="e.g. Large / Blue"></td>' +
 				'<td><input type="number" step="0.01" min="0" name="scc_variations[' + index + '][price]"></td>' +
 				'<td><input type="text" name="scc_variations[' + index + '][sku]"></td>' +
+				'<td><textarea rows="2" name="scc_variations[' + index + '][description]" placeholder="Shown on the product page when this variant is selected"></textarea></td>' +
 				'<td><button type="button" class="button scc-remove-variation">Remove</button></td>';
 			tbody.appendChild(row);
 		});

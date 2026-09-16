@@ -108,6 +108,7 @@ final class ProductPostType implements Hookable
                             'price' => ['type' => 'number'],
                             'sku' => ['type' => 'string'],
                             'image_id' => ['type' => 'integer'],
+                            'description' => ['type' => 'string'],
                         ],
                     ],
                 ],

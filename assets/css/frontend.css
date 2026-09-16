@@ -128,3 +128,20 @@
 .scc-mini-basket-count {
 	font-weight: 700;
 }
+
+.scc-variant-selector select {
+	max-width: 100%;
+}
+
+.scc-variant-image {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 1rem 0;
+}
+
+.scc-variant-description {
+	white-space: pre-line;
+	margin-bottom: 1rem;
+	color: #444;
+}

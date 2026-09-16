@@ -140,6 +140,7 @@ final class ProductsRestController implements Hookable
                 'price' => $variation['price'],
                 'price_formatted' => \scc_price($variation['price'], $currency),
                 'image' => $variation['image_id'] ? (\wp_get_attachment_image_url($variation['image_id'], 'medium') ?: null) : null,
+                'description' => $variation['description'],
             ],
             $product->variations()
         );
