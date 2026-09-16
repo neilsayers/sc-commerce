@@ -1,0 +1,16 @@
+#scc-variations-table input[type="text"],
+#scc-variations-table input[type="number"] {
+	width: 100%;
+}
+
+#scc-order-line-items table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+#scc-order-line-items th,
+#scc-order-line-items td {
+	padding: 6px 8px;
+	text-align: left;
+	border-bottom: 1px solid #ddd;
+}

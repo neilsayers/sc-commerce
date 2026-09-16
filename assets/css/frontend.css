@@ -1,0 +1,40 @@
+.scc-product-buy-box {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid #e5e5e5;
+}
+
+.scc-product-price {
+	font-size: 1.25rem;
+	font-weight: 700;
+}
+
+.scc-product-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.scc-product-actions form {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.scc-basket-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.scc-basket-table th,
+.scc-basket-table td {
+	padding: 0.5rem;
+	border-bottom: 1px solid #e5e5e5;
+	text-align: left;
+}
+
+.scc-notice {
+	padding: 0.75rem 1rem;
+	background: #f5f5f5;
+	border-left: 3px solid #999;
+}
