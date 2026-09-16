@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.5.1
+Stable tag: 0.6.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -17,24 +17,29 @@ screens and plugin ecosystem are more than the site will ever use.
 
 **Products.** A "Product" post type with a price, SKU and simple/variable type. Variable products currently store a flat
 list of variations (label, price, SKU) as provision for a future attribute-matrix UI — see "Variable products" below.
-Products belong to a hierarchical "Product Types" taxonomy for browsing/grouping.
+Products belong to a hierarchical "Product Types" taxonomy for browsing/grouping. `[scc_products]` lists them as a
+card grid by default, or `layout="list"` for a compact one-row-per-product table.
 
 **Basket.** A logged-in visitor's basket lives in their own user meta; a guest's lives entirely in a cookie (the basket
 itself, JSON-encoded, not a server-side session token) — see Basket\Basket's class doc. Adding an item is AJAX
 (Frontend\BasketRestController) with a working no-JS form fallback (Frontend\BasketFormController) behind the same
-markup. A guest's basket merges into their account automatically on login (Basket\BasketMerger).
+markup. A guest's basket merges into their account automatically on login (Basket\BasketMerger). `[scc_mini_basket]`
+gives a header/sidebar a compact icon + item count + running total linking to the full basket, staying in sync with
+AJAX add-to-basket elsewhere on the page without a reload.
 
-**Checkout & payments.** "Buy Now" on a product, or "Proceed to checkout" from the basket, both end up at
-Frontend\CheckoutController, which creates an Order (see "Orders" below) and redirects to PayPal — PayPal Standard's
-hosted checkout (`cgi-bin/webscr`), needing only a business email address in Settings, no API keys or SDK. Payment
-confirmation comes from PayPal's IPN callback (Gateways\PayPal\PayPalIpnListener), never from the customer's browser
-landing back on the site, since that can be skipped, closed or spoofed. Adding a second gateway (Stripe Checkout, GoCardless,
-PayPal's own Smart Buttons/Orders v2 API) means writing a class implementing Contracts\PaymentGateway — nothing else in
-the checkout flow needs to change.
+**Checkout & payments.** There's no "Buy Now" shortcut — every purchase goes "Add to basket" then "Proceed to
+checkout" from the basket, since checkout is the only point that collects the customer's name and delivery address,
+which every order needs regardless of what's being bought. Checkout (Frontend\CheckoutController) creates an Order
+(see "Orders" below) and redirects to PayPal — PayPal Standard's hosted checkout (`cgi-bin/webscr`), needing only a
+business email address in Settings, no API keys or SDK. Payment confirmation comes from PayPal's IPN callback
+(Gateways\PayPal\PayPalIpnListener), never from the customer's browser landing back on the site, since that can be
+skipped, closed or spoofed. Adding a second gateway (Stripe Checkout, GoCardless, PayPal's own Smart Buttons/Orders
+v2 API) means writing a class implementing Contracts\PaymentGateway — nothing else in the checkout flow needs to
+change.
 
-**Orders.** An "Order" post is created the moment a customer expresses intent to buy — a Buy Now click, or submitting the
-checkout form — *before* any payment happens, so abandoned and failed attempts are captured too, not just successful
-ones. Status lives in postmeta rather than WordPress's own post_status, with a fixed set: Created, Payment Pending,
+**Orders.** An "Order" post is created the moment a customer submits the checkout form — *before* any payment
+happens, so abandoned and failed attempts are captured too, not just successful ones. Status lives in postmeta
+rather than WordPress's own post_status, with a fixed set: Created, Payment Pending,
 Cancelled, Paid, Payment Failed, Complete, Dispatched. Orders aren't created manually in wp-admin (create_posts is
 locked out for the type) — only ever via Orders\Order::create(). The checkout form collects a UK delivery address
 (line 1, line 2, town, county, postcode — no country field yet, every order gets a fixed "GB") plus optional order
@@ -50,7 +55,7 @@ placed with no payment gateway configured, since that order will never reach "Pa
 The "Variable" product type and its variations repeater (label/price/SKU per row) are provision, not a full
 implementation — there's no attribute system (e.g. Size × Colour generating rows automatically), and the testbed
 theme's product page doesn't yet render a variant picker (Frontend\ProductContent shows a placeholder note instead
-of Buy Now/Add to Basket for variable products). The meta shape (`_scc_variations`, a flat array of rows) is chosen
+of an Add to Basket form for variable products). The meta shape (`_scc_variations`, a flat array of rows) is chosen
 so a future attribute-matrix UI can write to the same field without a data migration.
 
 == Payments: why PayPal Standard, and what else is free ==
@@ -72,9 +77,9 @@ Contracts\PaymentGateway implementation:
 == Product data: three ways in ==
 
 * **PHP template functions** (`scc_the_product()`, `scc_the_products()`, `scc_the_product_buy_box()`,
-  `scc_add_to_basket_button()`, `scc_buy_now_button()`, `scc_the_basket()`, `scc_the_checkout()`, ...) — for theme
+  `scc_add_to_basket_button()`, `scc_the_basket()`, `scc_the_mini_basket()`, `scc_the_checkout()`, ...) — for theme
   code on this same site.
-* **Shortcodes** (`[scc_product]`, `[scc_products]`, `[scc_add_to_basket]`, `[scc_buy_now]`, `[scc_basket]`,
+* **Shortcodes** (`[scc_product]`, `[scc_products]`, `[scc_add_to_basket]`, `[scc_basket]`, `[scc_mini_basket]`,
   `[scc_checkout]`) — for post/page content. Each one is a one-line wrapper around the matching function above, not
   a second implementation, so the two can never render differently.
 * **REST API** (`GET /wp-json/scc/v1/products`, `GET /wp-json/scc/v1/products/{id}`) — for anything outside this
@@ -93,6 +98,16 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.6.0 =
+* **Breaking:** removed "Buy Now" entirely (`[scc_buy_now]`, `scc_buy_now_button()`) — every purchase now goes
+  through "Add to basket" then checkout, since checkout is the only point that collects the customer's name and
+  delivery address, which every order needs regardless of what's being bought.
+* `[scc_products]`/`scc_the_products()` gained a `layout` option — the existing card grid (default), or `"list"`
+  for a compact one-row-per-product table (thumbnail, name, price, a small Add button).
+* Added `[scc_mini_basket]`/`scc_the_mini_basket()` — a compact icon + item count + running total link to the full
+  basket, for a header or sidebar. Stays in sync with an AJAX add-to-basket elsewhere on the page (assets/js/basket.js
+  now also updates a running total, not just the count).
 
 = 0.5.1 =
 * Checkout's required fields (name, email, address line 1, town, postcode) now show a red asterisk, with a

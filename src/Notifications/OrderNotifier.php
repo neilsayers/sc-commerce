@@ -36,9 +36,8 @@ final class OrderNotifier implements Hookable
     /**
      * A created order only ever gets here without a further status
      * change if there's no gateway to take it to (CheckoutController's
-     * "no_gateway" path) — anything else either transitions to
-     * Payment Pending next (handled by notifyIfPaid instead) or was a
-     * Buy Now click, which behaves the same way.
+     * "no_gateway" path) — anything else transitions to Payment
+     * Pending next, handled by notifyIfPaid instead.
      */
     public function notifyIfUnpaidByDesign(Order $order): void
     {

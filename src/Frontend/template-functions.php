@@ -4,8 +4,8 @@
  * Global scc_* helpers for theme templates to call directly (see
  * wp-content/themes/sc-commerce-testbed for the simplest possible
  * consumer) — deliberately not namespaced, since a theme shouldn't
- * need a `use` statement just to print a Buy Now button. Each one is a
- * thin wrapper over the real logic in src/, which is namespaced.
+ * need a `use` statement just to print an add-to-basket button. Each
+ * one is a thin wrapper over the real logic in src/, which is namespaced.
  *
  * Every one of these is also the *only* implementation behind the
  * matching shortcode (Frontend\Shortcodes) — [scc_product] calls
@@ -64,20 +64,31 @@ function scc_the_product(int $productId): void
 }
 
 /**
- * A grid of product cards (each one scc_the_product()) — what
- * [scc_products] renders. Filters go through Products\ProductQuery,
- * the same class the REST list endpoint uses, so this and
- * GET /scc/v1/products can never disagree about which products match
- * a given product_type/exclude/search.
+ * A grid of product cards (each one scc_the_product()), or — with
+ * 'layout' => 'list' — a compact one-row-per-product table
+ * (scc_the_products_list()) for a denser listing than the card grid
+ * suits. What [scc_products] renders either way. Filters go through
+ * Products\ProductQuery, the same class the REST list endpoint uses,
+ * so this and GET /scc/v1/products can never disagree about which
+ * products match a given product_type/exclude/search.
  *
- * @param array{exclude?: array<int, int>, product_type?: int|string, search?: string, limit?: int} $args
+ * @param array{exclude?: array<int, int>, product_type?: int|string, search?: string, limit?: int, layout?: string} $args
  */
 function scc_the_products(array $args = []): void
 {
+    $layout = ($args['layout'] ?? 'grid') === 'list' ? 'list' : 'grid';
+    unset($args['layout']);
+
     $products = ProductQuery::get($args);
 
     if ($products === []) {
         echo '<p class="scc-products-empty">No products found.</p>';
+
+        return;
+    }
+
+    if ($layout === 'list') {
+        scc_the_products_list($products);
 
         return;
     }
@@ -91,11 +102,59 @@ function scc_the_products(array $args = []): void
 }
 
 /**
- * Price plus Buy Now/Add to Basket — the part of a product's display
- * that actually depends on live data (price, stock, variations) rather
+ * The 'list' layout behind scc_the_products() — one row per product
+ * (thumbnail, name, price, a compact add-to-basket) instead of a full
+ * card, no excerpt, for pages that want more products visible at once
+ * than the grid's card size allows. Takes already-queried Products
+ * rather than query args, since scc_the_products() is the only
+ * caller — not registered as its own shortcode/function, it's the
+ * grid's sibling rendering, not a second listing feature.
+ *
+ * @param array<int, Product> $products
+ */
+function scc_the_products_list(array $products): void
+{
+    ?>
+    <table class="scc-products-list">
+        <tbody>
+            <?php foreach ($products as $product) : ?>
+                <tr>
+                    <td class="scc-products-list-thumb">
+                        <?php if (has_post_thumbnail($product->id())) : ?>
+                            <a href="<?php echo esc_url($product->permalink()); ?>"><?php echo get_the_post_thumbnail($product->id(), 'thumbnail'); ?></a>
+                        <?php endif; ?>
+                    </td>
+                    <td class="scc-products-list-name">
+                        <a href="<?php echo esc_url($product->permalink()); ?>"><?php echo esc_html($product->name()); ?></a>
+                    </td>
+                    <td class="scc-products-list-price"><?php echo esc_html($product->displayPrice((new Settings())->currency())); ?></td>
+                    <td class="scc-products-list-action">
+                        <?php if ($product->isVariable()) : ?>
+                            <a href="<?php echo esc_url($product->permalink()); ?>">Options</a>
+                        <?php else : ?>
+                            <?php scc_add_to_basket_button($product->id(), null, 'Add'); ?>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php
+}
+
+/**
+ * Price plus Add to Basket — the part of a product's display that
+ * actually depends on live data (price, stock, variations) rather
  * than editorial content, so it's kept separate from scc_the_product()
  * for pages (like the product's own single view) that already render
  * the name/image/excerpt themselves via the normal post content.
+ *
+ * Add to Basket is the only path to checkout (there's no "Buy Now" —
+ * see CheckoutController's class doc) precisely because checkout
+ * always needs the customer's name/address, which only the checkout
+ * form collects; skipping straight to PayPal would mean relying on
+ * PayPal's own account data for that instead, which this plugin
+ * doesn't want to depend on.
  */
 function scc_the_product_buy_box(int $productId): void
 {
@@ -110,38 +169,11 @@ function scc_the_product_buy_box(int $productId): void
         <?php if (! $product->isVariable()) : ?>
             <div class="scc-product-actions">
                 <?php scc_add_to_basket_button($productId); ?>
-                <?php scc_buy_now_button($productId); ?>
             </div>
         <?php else : ?>
             <p><em>This product has options — variant selection isn't built into the testbed theme yet; see the plugin's Documentation page.</em></p>
         <?php endif; ?>
     </div>
-    <?php
-}
-
-/**
- * A single <form> posting straight to admin-post.php?action=scc_buy_now
- * — see Frontend\CheckoutController::buyNow(). No JS required for this
- * one: a real "buy it now" has to survive a customer with JS disabled.
- */
-function scc_buy_now_button(int $productId, ?int $variation = null, string $label = 'Buy now'): void
-{
-    $product = Product::get($productId);
-
-    if (! $product) {
-        return;
-    }
-    ?>
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="scc-buy-now-form">
-        <?php wp_nonce_field('scc_buy_now'); ?>
-        <input type="hidden" name="action" value="scc_buy_now">
-        <input type="hidden" name="product_id" value="<?php echo esc_attr($productId); ?>">
-        <?php if ($variation !== null) : ?>
-            <input type="hidden" name="variation" value="<?php echo esc_attr($variation); ?>">
-        <?php endif; ?>
-        <input type="number" name="quantity" value="1" min="1" style="width:4em;">
-        <button type="submit" class="scc-buy-now"><?php echo esc_html($label); ?></button>
-    </form>
     <?php
 }
 
@@ -432,6 +464,28 @@ function scc_the_checkout_notices(): void
 function scc_basket_count(): int
 {
     return Basket::forCurrentVisitor()->itemCount();
+}
+
+/**
+ * A compact "icon, item count, running total" link to the full basket
+ * — for a header or sidebar, not a second way to view/edit its
+ * contents (that's scc_the_basket()/[scc_basket]). The count/total
+ * spans carry the same data-scc-basket-count/data-scc-basket-total
+ * hooks assets/js/basket.js already updates after an AJAX
+ * add-to-basket elsewhere on the page, so this stays in sync without
+ * a reload — a plain refresh always shows the true state anyway,
+ * since both are read fresh from the basket on every request.
+ */
+function scc_the_mini_basket(): void
+{
+    $basket = Basket::forCurrentVisitor();
+    ?>
+    <a href="<?php echo esc_url(scc_basket_url()); ?>" class="scc-mini-basket">
+        <span class="scc-mini-basket-icon" aria-hidden="true">🛒</span>
+        <span class="scc-mini-basket-count" data-scc-basket-count><?php echo esc_html((string) $basket->itemCount()); ?></span>
+        <span class="scc-mini-basket-total" data-scc-basket-total><?php echo esc_html(scc_price($basket->total())); ?></span>
+    </a>
+    <?php
 }
 
 function scc_basket_url(): string

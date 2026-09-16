@@ -21,8 +21,8 @@ final class Shortcodes implements Hookable
         \add_shortcode('scc_product', [$this, 'renderProduct']);
         \add_shortcode('scc_products', [$this, 'renderProducts']);
         \add_shortcode('scc_add_to_basket', [$this, 'renderAddToBasket']);
-        \add_shortcode('scc_buy_now', [$this, 'renderBuyNow']);
         \add_shortcode('scc_basket', [$this, 'renderBasket']);
+        \add_shortcode('scc_mini_basket', [$this, 'renderMiniBasket']);
         \add_shortcode('scc_checkout', [$this, 'renderCheckout']);
     }
 
@@ -41,14 +41,21 @@ final class Shortcodes implements Hookable
     }
 
     /**
-     * [scc_products exclude="2,4,5" product_type="6" search="" limit="20"]
-     * — a grid of product cards. atts: exclude (comma-separated product
-     * IDs to leave out), product_type (a Product Types term ID or
-     * slug), search, limit (0 = no limit, default 20).
+     * [scc_products exclude="2,4,5" product_type="6" search="" limit="20" layout="grid"]
+     * — a grid (default) or list of products. atts: exclude
+     * (comma-separated product IDs to leave out), product_type (a
+     * Product Types term ID or slug), search, limit (0 = no limit,
+     * default 20), layout ("grid" or "list").
      */
     public function renderProducts(array $atts): string
     {
-        $atts = \shortcode_atts(['exclude' => '', 'product_type' => '', 'search' => '', 'limit' => 20], $atts);
+        $atts = \shortcode_atts([
+            'exclude' => '',
+            'product_type' => '',
+            'search' => '',
+            'limit' => 20,
+            'layout' => 'grid',
+        ], $atts);
 
         $exclude = \array_filter(\array_map('absint', \explode(',', (string) $atts['exclude'])));
 
@@ -58,6 +65,7 @@ final class Shortcodes implements Hookable
             'product_type' => (string) $atts['product_type'],
             'search' => (string) $atts['search'],
             'limit' => (int) $atts['limit'],
+            'layout' => (string) $atts['layout'] === 'list' ? 'list' : 'grid',
         ]);
 
         return \ob_get_clean();
@@ -83,24 +91,6 @@ final class Shortcodes implements Hookable
     }
 
     /**
-     * [scc_buy_now id="123" variation="0" label="Buy now"] — same atts
-     * as [scc_add_to_basket].
-     */
-    public function renderBuyNow(array $atts): string
-    {
-        $atts = \shortcode_atts(['id' => 0, 'variation' => '', 'label' => 'Buy now'], $atts);
-
-        \ob_start();
-        \scc_buy_now_button(
-            (int) $atts['id'],
-            $atts['variation'] === '' ? null : (int) $atts['variation'],
-            (string) $atts['label']
-        );
-
-        return \ob_get_clean();
-    }
-
-    /**
      * [scc_basket] — no atts. What Setup\Activator's auto-created
      * "Basket" page contains.
      */
@@ -108,6 +98,18 @@ final class Shortcodes implements Hookable
     {
         \ob_start();
         \scc_the_basket();
+
+        return \ob_get_clean();
+    }
+
+    /**
+     * [scc_mini_basket] — no atts. A compact icon/count/total link to
+     * the full basket, for a header or sidebar rather than a page body.
+     */
+    public function renderMiniBasket(): string
+    {
+        \ob_start();
+        \scc_the_mini_basket();
 
         return \ob_get_clean();
     }

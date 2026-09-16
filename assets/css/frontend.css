@@ -45,6 +45,39 @@
 	gap: 1.5rem;
 }
 
+.scc-products-list {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+}
+
+.scc-products-list td {
+	padding: 0.4rem 0.5rem;
+	border-bottom: 1px solid #e5e5e5;
+	vertical-align: middle;
+}
+
+.scc-products-list-thumb img {
+	display: block;
+	width: 40px;
+	height: 40px;
+	object-fit: cover;
+}
+
+.scc-products-list-price {
+	white-space: nowrap;
+}
+
+.scc-products-list-action form {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.scc-products-list-action input[type="number"] {
+	width: 3em;
+}
+
 .scc-order-summary {
 	width: 100%;
 	max-width: 480px;
@@ -78,4 +111,20 @@
 .scc-required-key {
 	font-size: 0.875rem;
 	color: #666;
+}
+
+.scc-mini-basket {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	text-decoration: none;
+	color: inherit;
+}
+
+.scc-mini-basket-icon {
+	font-size: 1.1rem;
+}
+
+.scc-mini-basket-count {
+	font-weight: 700;
 }

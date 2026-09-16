@@ -22,10 +22,10 @@ final class DocumentationPage implements Hookable
      */
     private const SHORTCODES = [
         '[scc_product id="123"]' => 'A full product card — image, name, excerpt, price and buy box.',
-        '[scc_products exclude="2,4,5" product_type="6" search="" limit="20"]' => 'A grid of product cards. All attributes optional: exclude (comma-separated IDs to leave out), product_type (a Product Types term ID or slug), search, limit (0 = no limit, default 20).',
+        '[scc_products exclude="2,4,5" product_type="6" search="" limit="20" layout="grid"]' => 'A grid (default) or list of products. All attributes optional: exclude (comma-separated IDs to leave out), product_type (a Product Types term ID or slug), search, limit (0 = no limit, default 20), layout ("grid" or "list" — a compact one-row-per-product table).',
         '[scc_add_to_basket id="123" variation="0" label="Add to basket"]' => 'A standalone add-to-basket button for one product. variation and label are both optional.',
-        '[scc_buy_now id="123" variation="0" label="Buy now"]' => 'A standalone Buy Now button for one product. variation and label are both optional.',
         '[scc_basket]' => 'The basket table with quantity/remove controls — what the auto-created "Basket" page contains.',
+        '[scc_mini_basket]' => 'A compact icon/item-count/running-total link to the full basket, for a header or sidebar.',
         '[scc_checkout]' => 'The checkout form, and (once a customer is redirected back to it) their order\'s status — what the auto-created "Checkout" page contains.',
     ];
 
@@ -34,11 +34,11 @@ final class DocumentationPage implements Hookable
      */
     private const FUNCTIONS = [
         'scc_the_product(int $productId)' => 'Echoes a full product card — same markup as [scc_product].',
-        'scc_the_products(array $args = [])' => 'Echoes a grid of product cards — same markup as [scc_products]. Args: exclude, product_type, search, limit (see Products\ProductQuery).',
+        'scc_the_products(array $args = [])' => 'Echoes a grid of product cards, or a compact list table with layout => \'list\' — same markup as [scc_products]. Args: exclude, product_type, search, limit (see Products\ProductQuery), layout.',
         'scc_the_product_buy_box(int $productId)' => 'Echoes just the price + buy box, no name/image/excerpt — what a product\'s own single-view page uses (Frontend\ProductContent), since the theme already renders those.',
         'scc_add_to_basket_button(int $productId, ?int $variation = null, string $label = \'Add to basket\')' => 'Echoes one add-to-basket form.',
-        'scc_buy_now_button(int $productId, ?int $variation = null, string $label = \'Buy now\')' => 'Echoes one Buy Now form.',
         'scc_the_basket()' => 'Echoes the basket table — same markup as [scc_basket].',
+        'scc_the_mini_basket()' => 'Echoes a compact icon/item-count/running-total link to the full basket — same markup as [scc_mini_basket], for a header or sidebar.',
         'scc_the_checkout()' => 'Echoes the checkout form/status — same markup as [scc_checkout].',
         'scc_price(float $amount, ?string $currency = null)' => 'Formats an amount using the site\'s configured currency (or one you pass explicitly).',
         'scc_basket_count()' => 'The current visitor\'s total basket quantity — handy for a header/cart icon badge.',
@@ -219,9 +219,9 @@ final class DocumentationPage implements Hookable
         ?>
         <h2>Orders</h2>
         <p>
-            An Order is created at the moment a customer expresses intent to buy (a Buy Now click, or submitting the
-            checkout form) — before any payment happens, so abandoned/failed attempts are captured too. Manage
-            orders under the <strong>Orders</strong> menu; status only ever moves forward automatically via
+            An Order is created the moment a customer submits the checkout form — before any payment happens, so
+            abandoned/failed attempts are captured too. Manage orders under the <strong>Orders</strong> menu;
+            status only ever moves forward automatically via
             PayPal's IPN callback (see Payments below), except Dispatched, which is always set by hand once a
             parcel actually goes out.
         </p>
@@ -241,8 +241,7 @@ final class DocumentationPage implements Hookable
             required) and optional order notes, all stored on the order alongside its line items. There's no
             country field yet — every order gets a fixed <code>GB</code> country (<code>Order::address()</code>'s
             <code>country</code> key) rather than an empty one, ready for a real country selector to be added later
-            without changing the stored shape. A Buy Now order (as opposed to one from the basket/checkout form)
-            has these fields blank, since that flow only ever collects product/quantity.
+            without changing the stored shape.
         </p>
         <p class="description">
             Once redirected back from PayPal, the "Payment Pending" status shown there updates itself automatically

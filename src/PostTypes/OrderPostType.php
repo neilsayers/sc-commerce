@@ -5,10 +5,9 @@ namespace SCCommerce\PostTypes;
 use SCCommerce\Contracts\Hookable;
 
 /**
- * A single "Order" post, created the moment a customer expresses
- * intent to buy (Buy Now click, or Proceed to Checkout from the
- * basket) — before any payment happens, so it captures abandoned and
- * failed attempts too, not just successful ones. Status lives in
+ * A single "Order" post, created the moment a customer submits the
+ * checkout form — before any payment happens, so it captures abandoned
+ * and failed attempts too, not just successful ones. Status lives in
  * postmeta (self::META_STATUS) rather than a custom post_status, same
  * reasoning as SC Room Bookings' BookingPostType: an order is always
  * a "real" post, there's no need for WordPress's own publish/draft

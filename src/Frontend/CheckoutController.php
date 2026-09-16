@@ -10,12 +10,17 @@ use SCCommerce\PostTypes\OrderPostType;
 use SCCommerce\Settings\Settings;
 
 /**
- * Handles the two ways an Order gets created — a single-product "Buy
- * Now" click, and "Proceed to checkout" from the basket — via classic
- * admin-post.php form posts rather than REST. Both end in a redirect
- * (to PayPal, or back to the checkout page), which is what
+ * Handles "Proceed to checkout" from the basket via a classic
+ * admin-post.php form post rather than REST, since it ends in a
+ * redirect (to PayPal, or back to the checkout page), which is what
  * admin-post.php is built for; the basket's own add/remove/update
  * stays on BasketRestController since those are AJAX, not navigations.
+ *
+ * There's deliberately no "Buy Now" shortcut straight from a product
+ * page — every checkout needs the customer's name and delivery
+ * address, which only this form collects, and skipping it would mean
+ * either not having that data or relying on PayPal's own account data
+ * for it instead, which this plugin doesn't want to depend on.
  *
  * Order::create() runs before any gateway is involved (see its class
  * doc) — that's requirement #5's "regardless of whether the payment
@@ -29,27 +34,9 @@ final class CheckoutController implements Hookable
 
     public function register(): void
     {
-        \add_action('admin_post_scc_buy_now', [$this, 'buyNow']);
-        \add_action('admin_post_nopriv_scc_buy_now', [$this, 'buyNow']);
         \add_action('admin_post_scc_checkout', [$this, 'checkout']);
         \add_action('admin_post_nopriv_scc_checkout', [$this, 'checkout']);
         \add_action('template_redirect', [$this, 'handlePayPalReturn']);
-    }
-
-    public function buyNow(): void
-    {
-        \check_admin_referer('scc_buy_now');
-
-        $productId = (int) ($_POST['product_id'] ?? 0);
-        $variation = isset($_POST['variation']) && $_POST['variation'] !== '' ? (int) $_POST['variation'] : null;
-        $quantity = \max(1, (int) ($_POST['quantity'] ?? 1));
-
-        $order = Order::create(
-            [['product_id' => $productId, 'variation' => $variation, 'quantity' => $quantity]],
-            $this->customerFromRequest()
-        );
-
-        $this->redirectToPayment($order);
     }
 
     public function checkout(): void
@@ -76,13 +63,8 @@ final class CheckoutController implements Hookable
     }
 
     /**
-     * The address/notes fields only ever come from the checkout form
-     * (scc_the_checkout()) — Buy Now (scc_buy_now_button()) posts just
-     * product_id/quantity, so these are simply absent, not validated,
-     * on that path. Both go through this same method regardless, so
-     * an order created either way has the same meta keys — just some
-     * left blank rather than one order shape having fields the other
-     * doesn't.
+     * The address/notes fields always come from the checkout form
+     * (scc_the_checkout()) — checkout() is the only caller.
      */
     private function customerFromRequest(): array
     {

@@ -2,9 +2,10 @@
  * Progressive enhancement for the add-to-basket form
  * (template-functions.php's scc_add_to_basket_button): intercepts the
  * submit and posts to the REST basket endpoint instead, so adding an
- * item updates the on-page basket count without a full navigation.
- * Without this file (or with JS disabled) the form still works via
- * its plain admin-post.php action — see Frontend\BasketFormController.
+ * item updates the on-page basket count/total (including a header's
+ * scc_the_mini_basket()) without a full navigation. Without this file
+ * (or with JS disabled) the form still works via its plain
+ * admin-post.php action — see Frontend\BasketFormController.
  *
  * Expects a global `sccCommerce` object with `restUrl` and `nonce`,
  * localized onto this script by Frontend\Assets.
@@ -19,6 +20,15 @@
 	function updateCountDisplays(count) {
 		document.querySelectorAll('[data-scc-basket-count]').forEach(function (el) {
 			el.textContent = count;
+		});
+	}
+
+	// Keeps scc_the_mini_basket()/[scc_mini_basket] (e.g. in a header
+	// outside the page's own basket/checkout content) in sync with an
+	// add-to-basket elsewhere on the same page, without a reload.
+	function updateTotalDisplays(totalFormatted) {
+		document.querySelectorAll('[data-scc-basket-total]').forEach(function (el) {
+			el.textContent = totalFormatted;
 		});
 	}
 
@@ -54,6 +64,7 @@
 			})
 			.then(function (data) {
 				updateCountDisplays(data.item_count);
+				updateTotalDisplays(data.total_formatted);
 			})
 			.catch(function () {
 				form.submit(); // fall back to the plain admin-post.php round trip
