@@ -350,7 +350,7 @@ function scc_the_checkout(): void
             <label>County <span class="scc-optional">(optional)</span><br><input type="text" name="address_county"></label>
         </p>
         <p>
-            <label>Postcode<br><input type="text" name="address_postcode" required></label>
+            <label>Postcode<br><input type="text" name="address_postcode" pattern="[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}" title="Enter a valid UK postcode" required></label>
         </p>
 
         <p>
@@ -370,6 +370,11 @@ function scc_the_checkout_notices(): void
         $messages = [
             'empty' => 'There was nothing to check out.',
             'no_gateway' => 'Thanks — your order has been recorded, but online payment isn\'t set up on this site yet. We\'ll be in touch to arrange payment.',
+            'invalid_name' => 'Please enter your name.',
+            'invalid_email' => 'Please enter a valid email address.',
+            'invalid_address_line1' => 'Please enter your delivery address.',
+            'invalid_address_town' => 'Please enter your town or city.',
+            'invalid_address_postcode' => 'Please enter a valid UK postcode.',
         ];
 
         if (isset($messages[$notice])) {

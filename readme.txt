@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -38,7 +38,12 @@ ones. Status lives in postmeta rather than WordPress's own post_status, with a f
 Cancelled, Paid, Payment Failed, Complete, Dispatched. Orders aren't created manually in wp-admin (create_posts is
 locked out for the type) — only ever via Orders\Order::create(). The checkout form collects a UK delivery address
 (line 1, line 2, town, county, postcode — no country field yet, every order gets a fixed "GB") plus optional order
-notes, all stored on the order alongside its line items.
+notes, all stored on the order alongside its line items. Name, email, address line 1, town and postcode are required
+and validated server-side (postcode against a UK postcode shape), not just via the form's own HTML attributes.
+
+**Notifications.** The shop owner is emailed when an order needs attention — paid (confirmed by PayPal's IPN), or
+placed with no payment gateway configured, since that order will never reach "Paid" on its own. Sent to the
+"Order notification email" set in SC Commerce → Settings, or the site's admin email if that's left blank.
 
 == Variable products ==
 
@@ -88,6 +93,15 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.5.0 =
+* Shop owner now gets a notification email for orders that need attention — a paid order (from PayPal's IPN, not
+  the customer's return-URL landing), or an order placed with no gateway configured, which will never reach a paid
+  status on its own. Sent to a new "Order notification email" setting if set, otherwise the site's admin email.
+* Checkout now validates name, email, delivery address line 1, town and postcode server-side (not just via the
+  form's `required`/`pattern` attributes, which a direct POST can bypass) — postcode is checked against a UK
+  postcode shape. Missing/invalid submissions redirect back to checkout with a specific notice instead of creating
+  an incomplete order.
 
 = 0.4.0 =
 * The checkout confirmation screen's "Payment Pending" status now updates itself automatically (polls

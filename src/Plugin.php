@@ -18,6 +18,7 @@ use SCCommerce\Gateways\PayPal\PayPalGateway;
 use SCCommerce\Gateways\PayPal\PayPalIpnListener;
 use SCCommerce\MetaBoxes\OrderDetailsMetaBox;
 use SCCommerce\MetaBoxes\ProductDetailsMetaBox;
+use SCCommerce\Notifications\OrderNotifier;
 use SCCommerce\PostTypes\OrderPostType;
 use SCCommerce\PostTypes\ProductPostType;
 use SCCommerce\Settings\Settings;
@@ -63,6 +64,7 @@ final class Plugin
             $paypal,
             new CheckoutController($this->settings, $paypal),
             new PayPalIpnListener($this->settings),
+            new OrderNotifier($this->settings),
             new ProductsRestController(),
             new OrderStatusRestController(),
             new Shortcodes(),

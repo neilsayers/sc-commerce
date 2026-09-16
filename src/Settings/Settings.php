@@ -13,6 +13,7 @@ final class Settings
 
     private const DEFAULTS = [
         'currency' => 'GBP',
+        'notification_email' => '',
         'paypal_email' => '',
         'paypal_sandbox' => true,
         'basket_page_id' => 0,
@@ -29,6 +30,17 @@ final class Settings
     public function currency(): string
     {
         return (string) $this->values['currency'];
+    }
+
+    /**
+     * Blank unless the shop owner explicitly set one — callers wanting
+     * "shop owner's address, falling back to the site admin" (see
+     * Notifications\OrderNotifier) apply that fallback themselves
+     * rather than this class reaching into unrelated WP options.
+     */
+    public function notificationEmail(): string
+    {
+        return (string) $this->values['notification_email'];
     }
 
     public function paypalEmail(): string

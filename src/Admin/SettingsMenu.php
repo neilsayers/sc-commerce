@@ -13,10 +13,11 @@ use SCCommerce\Settings\Settings;
  * plugins (Event Types 90, Room Bookings 91, Maps 92, SEO 93).
  *
  * Two settings sections rather than one flat list: "General"
- * (currency) and "PayPal" (business email, sandbox mode) — the
- * section title is what actually draws the visual divider between
- * them (WordPress's own Settings API renders each add_settings_section()
- * as its own <h2> + fields table), not a custom <hr>.
+ * (currency, order notification email) and "PayPal" (business email,
+ * sandbox mode) — the section title is what actually draws the visual
+ * divider between them (WordPress's own Settings API renders each
+ * add_settings_section() as its own <h2> + fields table), not a
+ * custom <hr>.
  */
 final class SettingsMenu implements Hookable
 {
@@ -60,6 +61,13 @@ final class SettingsMenu implements Hookable
 
         \add_settings_section('scc_general', 'General', '__return_false', self::PAGE_SLUG);
         $this->addField('currency', 'Currency code', 'scc_general', 'text');
+        $this->addField(
+            'notification_email',
+            'Order notification email',
+            'scc_general',
+            'email',
+            'Where new-order emails are sent. Leave blank to use this site\'s admin email instead.'
+        );
 
         \add_settings_section(
             'scc_paypal',
@@ -76,9 +84,9 @@ final class SettingsMenu implements Hookable
         $this->addField('paypal_sandbox', 'Use sandbox mode', 'scc_paypal', 'checkbox');
     }
 
-    private function addField(string $key, string $label, string $section, string $type): void
+    private function addField(string $key, string $label, string $section, string $type, string $description = ''): void
     {
-        \add_settings_field($key, $label, function () use ($key, $type): void {
+        \add_settings_field($key, $label, function () use ($key, $type, $description): void {
             $settings = \get_option(Settings::optionName(), Settings::defaults());
             $value = $settings[$key] ?? '';
             $name = Settings::optionName()."[{$key}]";
@@ -99,6 +107,10 @@ final class SettingsMenu implements Hookable
                 \esc_attr($name),
                 \esc_attr((string) $value)
             );
+
+            if ($description !== '') {
+                printf('<p class="description">%s</p>', \esc_html($description));
+            }
         }, self::PAGE_SLUG, $section);
     }
 
@@ -114,6 +126,7 @@ final class SettingsMenu implements Hookable
 
         return [
             'currency' => isset($input['currency']) ? \strtoupper(\sanitize_text_field($input['currency'])) : 'GBP',
+            'notification_email' => isset($input['notification_email']) ? \sanitize_email($input['notification_email']) : '',
             'paypal_email' => isset($input['paypal_email']) ? \sanitize_email($input['paypal_email']) : '',
             'paypal_sandbox' => ! empty($input['paypal_sandbox']),
             'basket_page_id' => (int) $existing['basket_page_id'],
