@@ -10,4 +10,4 @@ This plugin is developed against the [sc-commerce-testbed](https://github.com/ne
 
 ## Status
 
-Early scaffold (v0.2.0) — see readme.txt's changelog.
+Early scaffold (v0.3.0) — see readme.txt's changelog.

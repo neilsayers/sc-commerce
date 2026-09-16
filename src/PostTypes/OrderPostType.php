@@ -33,8 +33,25 @@ final class OrderPostType implements Hookable
     public const META_TOTAL = '_scc_total';
     public const META_CUSTOMER_NAME = '_scc_customer_name';
     public const META_CUSTOMER_EMAIL = '_scc_customer_email';
+    public const META_CUSTOMER_NOTES = '_scc_customer_notes';
     public const META_GATEWAY = '_scc_gateway';
     public const META_TRANSACTION_ID = '_scc_transaction_id';
+
+    /**
+     * UK-only for now, deliberately — no country field on the checkout
+     * form, and every order gets this fixed value rather than an empty
+     * one. Adding other countries later means adding a country field
+     * to the form and reading it in
+     * Frontend\CheckoutController::customerFromRequest() instead of
+     * hardcoding META_ADDRESS_COUNTRY's value there; nothing about the
+     * meta shape itself needs to change.
+     */
+    public const META_ADDRESS_LINE1 = '_scc_address_line1';
+    public const META_ADDRESS_LINE2 = '_scc_address_line2';
+    public const META_ADDRESS_TOWN = '_scc_address_town';
+    public const META_ADDRESS_COUNTY = '_scc_address_county';
+    public const META_ADDRESS_POSTCODE = '_scc_address_postcode';
+    public const META_ADDRESS_COUNTRY = '_scc_address_country';
 
     public const STATUS_CREATED = 'created';
     public const STATUS_PAYMENT_PENDING = 'payment_pending';

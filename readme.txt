@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -36,7 +36,9 @@ the checkout flow needs to change.
 checkout form — *before* any payment happens, so abandoned and failed attempts are captured too, not just successful
 ones. Status lives in postmeta rather than WordPress's own post_status, with a fixed set: Created, Payment Pending,
 Cancelled, Paid, Payment Failed, Complete, Dispatched. Orders aren't created manually in wp-admin (create_posts is
-locked out for the type) — only ever via Orders\Order::create().
+locked out for the type) — only ever via Orders\Order::create(). The checkout form collects a UK delivery address
+(line 1, line 2, town, county, postcode — no country field yet, every order gets a fixed "GB") plus optional order
+notes, all stored on the order alongside its line items.
 
 == Variable products ==
 
@@ -64,13 +66,16 @@ Contracts\PaymentGateway implementation:
 
 == Product data: three ways in ==
 
-* **PHP template functions** (`scc_the_product()`, `scc_the_product_buy_box()`, `scc_add_to_basket_button()`,
-  `scc_buy_now_button()`, `scc_the_basket()`, `scc_the_checkout()`, ...) — for theme code on this same site.
-* **Shortcodes** (`[scc_product]`, `[scc_add_to_basket]`, `[scc_buy_now]`, `[scc_basket]`, `[scc_checkout]`) — for
-  post/page content. Each one is a one-line wrapper around the matching function above, not a second implementation,
-  so the two can never render differently.
+* **PHP template functions** (`scc_the_product()`, `scc_the_products()`, `scc_the_product_buy_box()`,
+  `scc_add_to_basket_button()`, `scc_buy_now_button()`, `scc_the_basket()`, `scc_the_checkout()`, ...) — for theme
+  code on this same site.
+* **Shortcodes** (`[scc_product]`, `[scc_products]`, `[scc_add_to_basket]`, `[scc_buy_now]`, `[scc_basket]`,
+  `[scc_checkout]`) — for post/page content. Each one is a one-line wrapper around the matching function above, not
+  a second implementation, so the two can never render differently.
 * **REST API** (`GET /wp-json/scc/v1/products`, `GET /wp-json/scc/v1/products/{id}`) — for anything outside this
-  site's own PHP. Public, read-only, versioned.
+  site's own PHP. Public, read-only, versioned. `[scc_products]`/`scc_the_products()` and the REST list endpoint are
+  both built on `Products\ProductQuery`, so filtering (`exclude`, `product_type` by ID or slug, `search`) behaves
+  identically whichever one you use.
 
 Full reference (attributes, query params, response shape) lives on the in-dashboard SC Commerce → Documentation
 screen, not just here.
@@ -83,6 +88,13 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.3.0 =
+* Added `[scc_products]`/`scc_the_products()` — a filterable product listing (`exclude`, `product_type` by term ID
+  or slug, `search`, `limit`), backed by a new `Products\ProductQuery` shared by the REST list endpoint too, which
+  gained matching `exclude`/term-ID support.
+* Checkout now collects a UK delivery address and optional order notes, stored on the order.
+* Checkout screen shows an order summary (line items + total) alongside the address/payment form.
 
 = 0.2.0 =
 * SC Commerce settings moved out from under Products into their own top-level admin menu, near the bottom of the

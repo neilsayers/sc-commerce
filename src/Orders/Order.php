@@ -38,7 +38,7 @@ final class Order
 
     /**
      * @param array<int, array{product_id: int, variation: ?int, quantity: int}> $items
-     * @param array{name?: string, email?: string} $customer
+     * @param array{name?: string, email?: string, notes?: string, address_line1?: string, address_line2?: string, address_town?: string, address_county?: string, address_postcode?: string} $customer
      */
     public static function create(array $items, array $customer = []): ?self
     {
@@ -102,6 +102,13 @@ final class Order
         \update_post_meta($postId, OrderPostType::META_TOTAL, $total);
         \update_post_meta($postId, OrderPostType::META_CUSTOMER_NAME, \sanitize_text_field($customer['name'] ?? ''));
         \update_post_meta($postId, OrderPostType::META_CUSTOMER_EMAIL, \sanitize_email($customer['email'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_CUSTOMER_NOTES, \sanitize_textarea_field($customer['notes'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_ADDRESS_LINE1, \sanitize_text_field($customer['address_line1'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_ADDRESS_LINE2, \sanitize_text_field($customer['address_line2'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_ADDRESS_TOWN, \sanitize_text_field($customer['address_town'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_ADDRESS_COUNTY, \sanitize_text_field($customer['address_county'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_ADDRESS_POSTCODE, \sanitize_text_field($customer['address_postcode'] ?? ''));
+        \update_post_meta($postId, OrderPostType::META_ADDRESS_COUNTRY, 'GB');
 
         $order = self::get($postId);
 
@@ -182,6 +189,46 @@ final class Order
     public function customerEmail(): string
     {
         return (string) \get_post_meta($this->post->ID, OrderPostType::META_CUSTOMER_EMAIL, true);
+    }
+
+    public function customerNotes(): string
+    {
+        return (string) \get_post_meta($this->post->ID, OrderPostType::META_CUSTOMER_NOTES, true);
+    }
+
+    /**
+     * @return array{line1: string, line2: string, town: string, county: string, postcode: string, country: string}
+     */
+    public function address(): array
+    {
+        return [
+            'line1' => (string) \get_post_meta($this->post->ID, OrderPostType::META_ADDRESS_LINE1, true),
+            'line2' => (string) \get_post_meta($this->post->ID, OrderPostType::META_ADDRESS_LINE2, true),
+            'town' => (string) \get_post_meta($this->post->ID, OrderPostType::META_ADDRESS_TOWN, true),
+            'county' => (string) \get_post_meta($this->post->ID, OrderPostType::META_ADDRESS_COUNTY, true),
+            'postcode' => (string) \get_post_meta($this->post->ID, OrderPostType::META_ADDRESS_POSTCODE, true),
+            'country' => (string) \get_post_meta($this->post->ID, OrderPostType::META_ADDRESS_COUNTRY, true),
+        ];
+    }
+
+    /**
+     * The address as printable lines, blank fields (address_line2/
+     * county are both optional on the checkout form) simply omitted
+     * rather than left as empty lines.
+     *
+     * @return array<int, string>
+     */
+    public function addressLines(): array
+    {
+        $address = $this->address();
+
+        return \array_values(\array_filter([
+            $address['line1'],
+            $address['line2'],
+            $address['town'],
+            $address['county'],
+            $address['postcode'],
+        ], static fn (string $line): bool => $line !== ''));
     }
 
     public function recordTransaction(string $gateway, string $transactionId): void

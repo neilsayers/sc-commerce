@@ -19,6 +19,7 @@ final class Shortcodes implements Hookable
     public function register(): void
     {
         \add_shortcode('scc_product', [$this, 'renderProduct']);
+        \add_shortcode('scc_products', [$this, 'renderProducts']);
         \add_shortcode('scc_add_to_basket', [$this, 'renderAddToBasket']);
         \add_shortcode('scc_buy_now', [$this, 'renderBuyNow']);
         \add_shortcode('scc_basket', [$this, 'renderBasket']);
@@ -35,6 +36,29 @@ final class Shortcodes implements Hookable
 
         \ob_start();
         \scc_the_product((int) $atts['id']);
+
+        return \ob_get_clean();
+    }
+
+    /**
+     * [scc_products exclude="2,4,5" product_type="6" search="" limit="20"]
+     * — a grid of product cards. atts: exclude (comma-separated product
+     * IDs to leave out), product_type (a Product Types term ID or
+     * slug), search, limit (0 = no limit, default 20).
+     */
+    public function renderProducts(array $atts): string
+    {
+        $atts = \shortcode_atts(['exclude' => '', 'product_type' => '', 'search' => '', 'limit' => 20], $atts);
+
+        $exclude = \array_filter(\array_map('absint', \explode(',', (string) $atts['exclude'])));
+
+        \ob_start();
+        \scc_the_products([
+            'exclude' => $exclude,
+            'product_type' => (string) $atts['product_type'],
+            'search' => (string) $atts['search'],
+            'limit' => (int) $atts['limit'],
+        ]);
 
         return \ob_get_clean();
     }

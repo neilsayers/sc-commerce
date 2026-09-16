@@ -79,6 +79,18 @@ final class OrderDetailsMetaBox implements Hookable
         ?>
         <p><strong>Name:</strong> <?php echo \esc_html($order->customerName() ?: '—'); ?></p>
         <p><strong>Email:</strong> <?php echo \esc_html($order->customerEmail() ?: '—'); ?></p>
+        <?php $addressLines = $order->addressLines(); ?>
+        <p>
+            <strong>Address:</strong><br>
+            <?php if ($addressLines === []) : ?>
+                —
+            <?php else : ?>
+                <?php echo \esc_html(\implode(', ', $addressLines)); ?>
+            <?php endif; ?>
+        </p>
+        <?php if ($order->customerNotes() !== '') : ?>
+            <p><strong>Notes:</strong><br><?php echo \nl2br(\esc_html($order->customerNotes())); ?></p>
+        <?php endif; ?>
         <?php
     }
 

@@ -20,6 +20,7 @@ use SCCommerce\Basket\Basket;
 use SCCommerce\Orders\Order;
 use SCCommerce\PostTypes\OrderPostType;
 use SCCommerce\Products\Product;
+use SCCommerce\Products\ProductQuery;
 use SCCommerce\Settings\Settings;
 use SCCommerce\Support\Money;
 
@@ -58,6 +59,33 @@ function scc_the_product(int $productId): void
             <div class="scc-product-excerpt"><?php echo wp_kses_post($excerpt); ?></div>
         <?php endif; ?>
         <?php scc_the_product_buy_box($productId); ?>
+    </div>
+    <?php
+}
+
+/**
+ * A grid of product cards (each one scc_the_product()) — what
+ * [scc_products] renders. Filters go through Products\ProductQuery,
+ * the same class the REST list endpoint uses, so this and
+ * GET /scc/v1/products can never disagree about which products match
+ * a given product_type/exclude/search.
+ *
+ * @param array{exclude?: array<int, int>, product_type?: int|string, search?: string, limit?: int} $args
+ */
+function scc_the_products(array $args = []): void
+{
+    $products = ProductQuery::get($args);
+
+    if ($products === []) {
+        echo '<p class="scc-products-empty">No products found.</p>';
+
+        return;
+    }
+    ?>
+    <div class="scc-products">
+        <?php foreach ($products as $product) : ?>
+            <?php scc_the_product($product->id()); ?>
+        <?php endforeach; ?>
     </div>
     <?php
 }
@@ -222,13 +250,62 @@ function scc_the_basket(): void
 }
 
 /**
- * The checkout form, plus (via query string, once a customer's been
- * redirected here — from a gateway or from CheckoutController::checkout())
- * order status/notice messaging. The same page doubles as the "payment
- * accepted"/"we'll be in touch" confirmation screen: there's no
- * separate "complete" page, since the meaningful state to show is
- * always this order's current status, and PayPalIpnListener is what
- * actually keeps that status current in the background.
+ * A read-only "what you're actually buying" box — same line items/
+ * total as scc_the_basket()'s table, minus the quantity/remove forms,
+ * since by checkout the point isn't to edit the basket further, just
+ * to confirm it before handing over address/payment details.
+ */
+function scc_the_order_summary(Basket $basket): void
+{
+    ?>
+    <table class="scc-order-summary">
+        <caption>Order summary</caption>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Line total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($basket->enrichedItems() as $item) : ?>
+                <tr>
+                    <td>
+                        <?php echo esc_html($item['product']->name()); ?>
+                        <?php if ($item['variation'] !== null) : $variation = $item['product']->variation($item['variation']); ?>
+                            <br><small><?php echo esc_html($variation['label'] ?? ''); ?></small>
+                        <?php endif; ?>
+                    </td>
+                    <td><?php echo esc_html((string) $item['quantity']); ?></td>
+                    <td><?php echo esc_html(scc_price($item['line_total'])); ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2" style="text-align:right;">Total</th>
+                <th><?php echo esc_html(scc_price($basket->total())); ?></th>
+            </tr>
+        </tfoot>
+    </table>
+    <?php
+}
+
+/**
+ * The checkout form (order summary, address, and payment) plus, via
+ * query string once a customer's been redirected here — from a
+ * gateway or from CheckoutController::checkout() — order status/
+ * notice messaging. The same page doubles as the "payment accepted"/
+ * "we'll be in touch" confirmation screen: there's no separate
+ * "complete" page, since the meaningful state to show is always this
+ * order's current status, and PayPalIpnListener is what actually
+ * keeps that status current in the background.
+ *
+ * Address fields assume a UK audience for now (no country selector —
+ * Orders\Order stores a fixed 'GB' country on every order regardless).
+ * Adding one later is additive: a new form field plus reading it in
+ * Frontend\CheckoutController::customerFromRequest(), nothing else
+ * needs to change.
  */
 function scc_the_checkout(): void
 {
@@ -245,16 +322,41 @@ function scc_the_checkout(): void
     if ($basket->isEmpty()) {
         return;
     }
+
+    scc_the_order_summary($basket);
     ?>
     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="scc-checkout-form">
         <?php wp_nonce_field('scc_checkout'); ?>
         <input type="hidden" name="action" value="scc_checkout">
+
         <p>
             <label>Name<br><input type="text" name="customer_name" required></label>
         </p>
         <p>
             <label>Email<br><input type="email" name="customer_email" required></label>
         </p>
+
+        <h3>Delivery address</h3>
+        <p>
+            <label>Address line 1<br><input type="text" name="address_line1" required></label>
+        </p>
+        <p>
+            <label>Address line 2 <span class="scc-optional">(optional)</span><br><input type="text" name="address_line2"></label>
+        </p>
+        <p>
+            <label>Town / city<br><input type="text" name="address_town" required></label>
+        </p>
+        <p>
+            <label>County <span class="scc-optional">(optional)</span><br><input type="text" name="address_county"></label>
+        </p>
+        <p>
+            <label>Postcode<br><input type="text" name="address_postcode" required></label>
+        </p>
+
+        <p>
+            <label>Order notes <span class="scc-optional">(optional)</span><br><textarea name="customer_notes" rows="3"></textarea></label>
+        </p>
+
         <p><strong>Total: <?php echo esc_html(scc_price($basket->total())); ?></strong></p>
         <button type="submit" class="scc-place-order">Pay with PayPal</button>
     </form>

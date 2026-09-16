@@ -22,6 +22,7 @@ final class DocumentationPage implements Hookable
      */
     private const SHORTCODES = [
         '[scc_product id="123"]' => 'A full product card — image, name, excerpt, price and buy box.',
+        '[scc_products exclude="2,4,5" product_type="6" search="" limit="20"]' => 'A grid of product cards. All attributes optional: exclude (comma-separated IDs to leave out), product_type (a Product Types term ID or slug), search, limit (0 = no limit, default 20).',
         '[scc_add_to_basket id="123" variation="0" label="Add to basket"]' => 'A standalone add-to-basket button for one product. variation and label are both optional.',
         '[scc_buy_now id="123" variation="0" label="Buy now"]' => 'A standalone Buy Now button for one product. variation and label are both optional.',
         '[scc_basket]' => 'The basket table with quantity/remove controls — what the auto-created "Basket" page contains.',
@@ -33,6 +34,7 @@ final class DocumentationPage implements Hookable
      */
     private const FUNCTIONS = [
         'scc_the_product(int $productId)' => 'Echoes a full product card — same markup as [scc_product].',
+        'scc_the_products(array $args = [])' => 'Echoes a grid of product cards — same markup as [scc_products]. Args: exclude, product_type, search, limit (see Products\ProductQuery).',
         'scc_the_product_buy_box(int $productId)' => 'Echoes just the price + buy box, no name/image/excerpt — what a product\'s own single-view page uses (Frontend\ProductContent), since the theme already renders those.',
         'scc_add_to_basket_button(int $productId, ?int $variation = null, string $label = \'Add to basket\')' => 'Echoes one add-to-basket form.',
         'scc_buy_now_button(int $productId, ?int $variation = null, string $label = \'Buy now\')' => 'Echoes one Buy Now form.',
@@ -135,7 +137,7 @@ final class DocumentationPage implements Hookable
             and read-only; no authentication needed, since every field it returns is already visible on the
             product's own front-end page.
         </p>
-        <p><code><?php echo \esc_html(\rest_url('scc/v1/products')); ?>?product_type=mugs&amp;limit=10</code></p>
+        <p><code><?php echo \esc_html(\rest_url('scc/v1/products')); ?>?product_type=mugs&amp;exclude=2,4,5&amp;limit=10</code></p>
         <p>Single product: <code><?php echo \esc_html(\rest_url('scc/v1/products/123')); ?></code></p>
         <p>
             <strong>v1 is a promise:</strong> existing fields won't be renamed or removed within it. A field can be
@@ -158,7 +160,8 @@ final class DocumentationPage implements Hookable
             </thead>
             <tbody>
                 <tr><td><code>search</code></td><td>Free-text search against the product title/content.</td></tr>
-                <tr><td><code>product_type</code></td><td>A Product Types taxonomy term slug to filter by.</td></tr>
+                <tr><td><code>product_type</code></td><td>A Product Types taxonomy term ID or slug to filter by.</td></tr>
+                <tr><td><code>exclude</code></td><td>Comma-separated product IDs to leave out, e.g. "2,4,5".</td></tr>
                 <tr><td><code>limit</code></td><td>Maximum products to return, capped at 100. 0 means no limit. Default 20.</td></tr>
             </tbody>
         </table>
@@ -230,6 +233,17 @@ final class DocumentationPage implements Hookable
                 <?php endforeach; ?>
             </tbody>
         </table>
+
+        <h3>Checkout fields</h3>
+        <p>
+            The checkout form (<code>scc_the_checkout()</code>/<code>[scc_checkout]</code>) collects name, email, a
+            UK delivery address (address line 1 — required, address line 2, town — required, county, postcode —
+            required) and optional order notes, all stored on the order alongside its line items. There's no
+            country field yet — every order gets a fixed <code>GB</code> country (<code>Order::address()</code>'s
+            <code>country</code> key) rather than an empty one, ready for a real country selector to be added later
+            without changing the stored shape. A Buy Now order (as opposed to one from the basket/checkout form)
+            has these fields blank, since that flow only ever collects product/quantity.
+        </p>
         <?php
     }
 
@@ -243,12 +257,28 @@ final class DocumentationPage implements Hookable
             real payment. Confirmation always comes from PayPal's own server-to-server IPN callback, never from the
             customer's browser landing back on the site (which can be skipped, closed, or spoofed).
         </p>
+
+        <h3>What PayPal's IPN actually sends</h3>
+        <p>
+            An IPN is an ordinary <code>application/x-www-form-urlencoded</code> POST to
+            <code>Gateways\PayPal\PayPalIpnListener</code>'s REST route, containing several dozen fields — most of
+            which this plugin ignores. The ones it reads:
+        </p>
+        <table class="widefat striped" style="max-width: 700px;">
+            <thead><tr><th>Field</th><th>What it's used for</th></tr></thead>
+            <tbody>
+                <tr><td><code>payment_status</code></td><td>Mapped to an order status — "Completed" → Paid, "Pending" → Payment Pending, "Denied"/"Failed"/"Voided"/"Expired" → Payment Failed. Anything else is left as Payment Pending.</td></tr>
+                <tr><td><code>custom</code> / <code>invoice</code></td><td>The order ID (PayPalGateway::checkoutUrl() sets both to it) — whichever is present identifies which order this notification is about.</td></tr>
+                <tr><td><code>txn_id</code></td><td>PayPal's own transaction ID, recorded on the order (<code>Order::transactionId()</code>) for support/reconciliation.</td></tr>
+            </tbody>
+        </table>
         <p class="description">
-            Other free-to-integrate options worth considering as a second gateway — each would be a class
-            implementing <code>Contracts\PaymentGateway</code>, alongside the existing PayPal one, not a
-            replacement for it: PayPal Smart Buttons/Orders v2 API (PayPal's current recommended integration, needs
-            API credentials), Stripe Checkout (a similar hosted-page flow, arguably more modern), GoCardless (direct
-            debit, better suited to recurring products than one-off orders).
+            Every notification is first re-posted back to PayPal with <code>cmd=_notify-validate</code> prepended —
+            only a "VERIFIED" reply is trusted; anything else (including a network failure) is rejected outright and
+            never touches an order. See PayPal's own IPN variable reference for the full field list if extending
+            this — <code>payer_email</code>/<code>first_name</code>/<code>last_name</code>/<code>address_*</code>
+            are commonly-wanted ones this plugin doesn't currently store, since it already collects its own
+            delivery address on the checkout form.
         </p>
         <?php
     }

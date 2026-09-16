@@ -3,8 +3,8 @@
 namespace SCCommerce\Frontend;
 
 use SCCommerce\Contracts\Hookable;
-use SCCommerce\PostTypes\ProductPostType;
 use SCCommerce\Products\Product;
+use SCCommerce\Products\ProductQuery;
 use SCCommerce\Settings\Settings;
 use SCCommerce\Taxonomies\ProductTypeTaxonomy;
 
@@ -62,8 +62,14 @@ final class ProductsRestController implements Hookable
                     // (e.g. this param left off the query string
                     // entirely), which then blows up wherever the
                     // "sanitized" value is later treated as a string.
-                    'sanitize_callback' => static fn ($value): string => \sanitize_title((string) $value),
-                    'description' => 'A Product Types taxonomy term slug to filter by.',
+                    'sanitize_callback' => static fn ($value): string => \is_numeric($value) ? (string) \absint($value) : \sanitize_title((string) $value),
+                    'description' => 'A Product Types taxonomy term ID or slug to filter by.',
+                ],
+                'exclude' => [
+                    'type' => 'string',
+                    'default' => '',
+                    'sanitize_callback' => static fn ($value): string => (string) $value,
+                    'description' => 'Comma-separated product IDs to leave out, e.g. "2,4,5".',
                 ],
                 'limit' => [
                     'type' => 'integer',
@@ -83,31 +89,19 @@ final class ProductsRestController implements Hookable
 
     public function index(\WP_REST_Request $request): \WP_REST_Response
     {
-        $limit = (int) $request->get_param('limit');
-        $limit = $limit === 0 ? -1 : \min(100, $limit);
-
-        $query = [
-            'post_type' => ProductPostType::POST_TYPE,
-            'post_status' => 'publish',
-            'posts_per_page' => $limit,
-            's' => (string) $request->get_param('search'),
-        ];
-
-        $productType = (string) $request->get_param('product_type');
-
-        if ($productType !== '') {
-            $query['tax_query'] = [[
-                'taxonomy' => ProductTypeTaxonomy::TAXONOMY,
-                'field' => 'slug',
-                'terms' => $productType,
-            ]];
-        }
-
-        $posts = \get_posts($query);
+        $exclude = \array_filter(\array_map(
+            'absint',
+            \explode(',', (string) $request->get_param('exclude'))
+        ));
 
         $products = \array_values(\array_filter(\array_map(
-            fn (\WP_Post $post): ?array => $this->toResponse(Product::get($post->ID)),
-            $posts
+            fn (Product $product): ?array => $this->toResponse($product),
+            ProductQuery::get([
+                'exclude' => $exclude,
+                'product_type' => (string) $request->get_param('product_type'),
+                'search' => (string) $request->get_param('search'),
+                'limit' => (int) $request->get_param('limit'),
+            ])
         )));
 
         return new \WP_REST_Response([

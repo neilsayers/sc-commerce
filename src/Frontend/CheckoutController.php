@@ -66,11 +66,26 @@ final class CheckoutController implements Hookable
         $this->redirectToPayment($order);
     }
 
+    /**
+     * The address/notes fields only ever come from the checkout form
+     * (scc_the_checkout()) — Buy Now (scc_buy_now_button()) posts just
+     * product_id/quantity, so these are simply absent, not validated,
+     * on that path. Both go through this same method regardless, so
+     * an order created either way has the same meta keys — just some
+     * left blank rather than one order shape having fields the other
+     * doesn't.
+     */
     private function customerFromRequest(): array
     {
         return [
             'name' => \sanitize_text_field(\wp_unslash($_POST['customer_name'] ?? '')),
             'email' => \sanitize_email(\wp_unslash($_POST['customer_email'] ?? '')),
+            'notes' => \sanitize_textarea_field(\wp_unslash($_POST['customer_notes'] ?? '')),
+            'address_line1' => \sanitize_text_field(\wp_unslash($_POST['address_line1'] ?? '')),
+            'address_line2' => \sanitize_text_field(\wp_unslash($_POST['address_line2'] ?? '')),
+            'address_town' => \sanitize_text_field(\wp_unslash($_POST['address_town'] ?? '')),
+            'address_county' => \sanitize_text_field(\wp_unslash($_POST['address_county'] ?? '')),
+            'address_postcode' => \sanitize_text_field(\wp_unslash($_POST['address_postcode'] ?? '')),
         ];
     }
 
