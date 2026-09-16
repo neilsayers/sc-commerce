@@ -3,6 +3,29 @@
 	width: 100%;
 }
 
+/**
+ * Kept small (140x79, 16:9) so the repeater stays scannable with
+ * several variation rows on screen at once — this is a thumbnail to
+ * tell rows apart at a glance, not a product image in its own right.
+ * object-fit: cover crops to that ratio regardless of the uploaded
+ * image's own aspect ratio, rather than distorting it to fit.
+ */
+.scc-variation-image {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.scc-variation-image-preview {
+	width: 140px;
+	height: 79px;
+	object-fit: cover;
+	display: block;
+	background: #f0f0f1;
+	border: 1px solid #dcdcde;
+}
+
 #scc-order-line-items table {
 	border-collapse: collapse;
 	width: 100%;

@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.7.0
+Stable tag: 0.8.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -56,7 +56,7 @@ placed with no payment gateway configured, since that order will never reach "Pa
 
 == Variable products ==
 
-The "Variable" product type and its variations repeater (label/price/SKU per row) are provision, not a full
+The "Variable" product type and its variations repeater (label/price/SKU/image per row) are provision, not a full
 implementation — there's no attribute system (e.g. Size × Colour generating rows automatically), and the testbed
 theme's product page doesn't yet render a variant picker (Frontend\ProductContent shows a placeholder note instead
 of an Add to Basket form for variable products). The meta shape (`_scc_variations`, a flat array of rows) is chosen
@@ -102,6 +102,15 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.8.0 =
+* Fixed product permalinks 404ing ("Page not found") after the product post type's registration changed without an
+  actual deactivate/reactivate cycle to trigger WordPress's own rewrite-rules flush. Added `Setup\RewriteFlusher`,
+  which self-heals this going forward by flushing once whenever the plugin's version changes — no need to manually
+  resave Settings -> Permalinks after an update again.
+* Each variation in the variable-product repeater can now have its own image — a small (140x79, 16:9) thumbnail
+  picked via the core media library, kept small so the repeater stays scannable with several rows on screen.
+  Exposed as `image` on the REST API's `variations` (`null` if a variation has none).
 
 = 0.7.0 =
 * An order stuck on "Payment Pending" for a month is now automatically moved to "Cancelled" by a daily WP-Cron job

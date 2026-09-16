@@ -23,6 +23,7 @@ use SCCommerce\Orders\StaleOrderCleaner;
 use SCCommerce\PostTypes\OrderPostType;
 use SCCommerce\PostTypes\ProductPostType;
 use SCCommerce\Settings\Settings;
+use SCCommerce\Setup\RewriteFlusher;
 use SCCommerce\Taxonomies\ProductTypeTaxonomy;
 
 /**
@@ -74,6 +75,7 @@ final class Plugin
             new Assets(),
             new SettingsMenu(),
             new DocumentationPage(),
+            new RewriteFlusher(),
         ];
 
         foreach ($features as $feature) {
