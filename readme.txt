@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -88,6 +88,13 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.4.0 =
+* The checkout confirmation screen's "Payment Pending" status now updates itself automatically (polls
+  `GET /scc/v1/orders/{id}/status` every few seconds) instead of needing a manual page refresh once PayPal's IPN
+  arrives.
+* Documentation page now explains why IPN won't complete an order locally without a public tunnel, and what to do
+  about it.
 
 = 0.3.0 =
 * Added `[scc_products]`/`scc_the_products()` — a filterable product listing (`exclude`, `product_type` by term ID

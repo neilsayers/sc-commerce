@@ -10,6 +10,7 @@ use SCCommerce\Frontend\Assets;
 use SCCommerce\Frontend\BasketFormController;
 use SCCommerce\Frontend\BasketRestController;
 use SCCommerce\Frontend\CheckoutController;
+use SCCommerce\Frontend\OrderStatusRestController;
 use SCCommerce\Frontend\ProductContent;
 use SCCommerce\Frontend\ProductsRestController;
 use SCCommerce\Frontend\Shortcodes;
@@ -63,6 +64,7 @@ final class Plugin
             new CheckoutController($this->settings, $paypal),
             new PayPalIpnListener($this->settings),
             new ProductsRestController(),
+            new OrderStatusRestController(),
             new Shortcodes(),
             new ProductContent(),
             new Assets(),

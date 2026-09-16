@@ -387,12 +387,28 @@ function scc_the_checkout_notices(): void
         return;
     }
 
-    $label = OrderPostType::STATUSES[$order->status()] ?? $order->status();
-    echo '<p class="scc-order-status">Order #'.esc_html((string) $order->id()).' — status: '.esc_html($label).'</p>';
+    $status = $order->status();
+    $label = OrderPostType::STATUSES[$status] ?? $status;
+    $isPending = $status === OrderPostType::STATUS_PAYMENT_PENDING;
 
-    if ($order->status() === OrderPostType::STATUS_PAYMENT_PENDING && ($_GET['scc_paypal'] ?? '') === 'return') {
-        echo '<p class="scc-notice">We\'re waiting for confirmation from PayPal — this page will show "Paid" once that arrives, usually within a few seconds.</p>';
-    }
+    // data-scc-poll="1" only while still pending — assets/js/order-status.js
+    // reads this box's data-order-id and polls
+    // GET scc/v1/orders/{id}/status until the status it gets back
+    // differs from data-status, then updates the text in place and
+    // stops. A terminal status (Paid, Payment Failed, ...) is never
+    // polled — nothing left to wait for. Progressive enhancement only:
+    // without JS, or once polling gives up (see the JS file's own
+    // attempt cap), a manual refresh of this same URL always shows
+    // the true current status anyway, since it's read fresh from the
+    // order on every request.
+    ?>
+    <div class="scc-order-status-box" data-scc-order-status data-order-id="<?php echo esc_attr((string) $order->id()); ?>" data-status="<?php echo esc_attr($status); ?>" data-poll="<?php echo $isPending ? '1' : '0'; ?>">
+        <p class="scc-order-status">Order #<?php echo esc_html((string) $order->id()); ?> — status: <span data-scc-status-label><?php echo esc_html($label); ?></span></p>
+        <?php if ($isPending && ($_GET['scc_paypal'] ?? '') === 'return') : ?>
+            <p class="scc-notice" data-scc-pending-notice>We're waiting for confirmation from PayPal — this'll update automatically once that arrives, usually within a few seconds.</p>
+        <?php endif; ?>
+    </div>
+    <?php
 }
 
 function scc_basket_count(): int

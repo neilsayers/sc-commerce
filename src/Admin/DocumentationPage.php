@@ -244,6 +244,12 @@ final class DocumentationPage implements Hookable
             without changing the stored shape. A Buy Now order (as opposed to one from the basket/checkout form)
             has these fields blank, since that flow only ever collects product/quantity.
         </p>
+        <p class="description">
+            Once redirected back from PayPal, the "Payment Pending" status shown there updates itself automatically
+            (<code>assets/js/order-status.js</code> polls <code>GET /scc/v1/orders/{id}/status</code> every few
+            seconds) rather than needing a manual refresh — pure progressive enhancement, since a refresh always
+            shows the true current status anyway.
+        </p>
         <?php
     }
 
@@ -256,6 +262,18 @@ final class DocumentationPage implements Hookable
             nothing but a business email address, no API keys or SDK, so it's the simplest thing that can take a
             real payment. Confirmation always comes from PayPal's own server-to-server IPN callback, never from the
             customer's browser landing back on the site (which can be skipped, closed, or spoofed).
+        </p>
+
+        <h3>Testing locally</h3>
+        <p>
+            An IPN needs PayPal's own servers to reach this site's <code>notify_url</code> — a site only reachable
+            on your own machine (a <code>.test</code>/<code>localhost</code> URL, an entry in <code>/etc/hosts</code>,
+            ...) has no publicly-routable address for PayPal to POST back to, so a sandbox payment will complete on
+            PayPal's side but the order here will stay on Payment Pending forever, with nothing to indicate why —
+            not a bug, just nowhere for the notification to land. Expose the site with a tunnel (ngrok, Cloudflare
+            Tunnel, ...) and point <code>WP_SITEURL</code>/<code>WP_HOME</code> at the tunnel's URL for the
+            duration of the test to see a full sandbox payment actually flip an order to Paid. Once this plugin is
+            on a real public domain, none of this applies — it works automatically.
         </p>
 
         <h3>What PayPal's IPN actually sends</h3>
