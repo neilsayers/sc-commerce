@@ -26,3 +26,35 @@
 	font-size: 13px;
 	line-height: 1.6;
 }
+
+/**
+ * A subtle left accent per order status on the Orders list table
+ * (Admin\OrderListTable::addStatusClass()) — inset box-shadow rather
+ * than border-left, since a <tr>'s own border isn't reliably drawn
+ * inside a border-collapse table like WordPress's list tables use,
+ * and box-shadow doesn't add layout width the way a real border would.
+ */
+.scc-order-row-status-created,
+.scc-order-row-status-payment_pending {
+	box-shadow: inset 10px 0 0 #dba617;
+}
+
+.scc-order-row-status-cancelled {
+	box-shadow: inset 10px 0 0 #8a1f11;
+}
+
+.scc-order-row-status-payment_failed {
+	box-shadow: inset 10px 0 0 #d63638;
+}
+
+.scc-order-row-status-paid {
+	box-shadow: inset 10px 0 0 #7ad03a;
+}
+
+.scc-order-row-status-dispatched {
+	box-shadow: inset 10px 0 0 #1e7e34;
+}
+
+.scc-order-row-status-complete {
+	box-shadow: inset 10px 0 0 #8e44ad;
+}

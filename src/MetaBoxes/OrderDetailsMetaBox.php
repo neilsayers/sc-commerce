@@ -10,10 +10,12 @@ use SCCommerce\Support\Money;
 /**
  * Line items, customer and totals are read-only here — an order is a
  * snapshot taken at checkout (see Orders\Order's class doc), not
- * something an admin edits line-by-line. The one thing genuinely
- * editable is status, e.g. moving Paid -> Dispatched once a parcel
- * goes out, or Payment Pending -> Cancelled if a customer emails to
- * say they've changed their mind.
+ * something an admin edits line-by-line. Status and tracking code are
+ * the two things genuinely editable: status e.g. moving Paid ->
+ * Dispatched once a parcel goes out, or Payment Pending -> Cancelled
+ * if a customer emails to say they've changed their mind; tracking
+ * code filled in by hand at the same time a parcel goes out, since
+ * there's no carrier integration to set it automatically yet.
  */
 final class OrderDetailsMetaBox implements Hookable
 {
@@ -23,7 +25,7 @@ final class OrderDetailsMetaBox implements Hookable
     public function register(): void
     {
         \add_action('add_meta_boxes', [$this, 'addMetaBoxes']);
-        \add_action('save_post_'.OrderPostType::POST_TYPE, [$this, 'saveStatus']);
+        \add_action('save_post_'.OrderPostType::POST_TYPE, [$this, 'save']);
         \add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
     }
 
@@ -66,6 +68,10 @@ final class OrderDetailsMetaBox implements Hookable
                 <strong>Transaction ID:</strong> <?php echo \esc_html($order->transactionId() ?: '—'); ?>
             </p>
         <?php endif; ?>
+        <p>
+            <label for="scc-tracking-code"><strong>Tracking code</strong></label><br>
+            <input type="text" id="scc-tracking-code" name="scc_tracking_code" value="<?php echo \esc_attr($order->trackingCode()); ?>" style="width:100%;">
+        </p>
         <?php
     }
 
@@ -135,7 +141,7 @@ final class OrderDetailsMetaBox implements Hookable
         <?php
     }
 
-    public function saveStatus(int $postId): void
+    public function save(int $postId): void
     {
         if (
             ! isset($_POST[self::NONCE_NAME])
@@ -148,14 +154,18 @@ final class OrderDetailsMetaBox implements Hookable
             return;
         }
 
-        if (! isset($_POST['scc_status'])) {
+        $order = Order::get($postId);
+
+        if (! $order) {
             return;
         }
 
-        $order = Order::get($postId);
-
-        if ($order) {
+        if (isset($_POST['scc_status'])) {
             $order->setStatus(\sanitize_key($_POST['scc_status']));
+        }
+
+        if (isset($_POST['scc_tracking_code'])) {
+            $order->setTrackingCode(\sanitize_text_field(\wp_unslash($_POST['scc_tracking_code'])));
         }
     }
 }

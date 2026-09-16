@@ -2,6 +2,7 @@
 
 namespace SCCommerce\Setup;
 
+use SCCommerce\Orders\StaleOrderCleaner;
 use SCCommerce\Settings\Settings;
 
 final class Activator
@@ -21,6 +22,11 @@ final class Activator
 
     public static function deactivate(): void
     {
+        // StaleOrderCleaner re-schedules itself on 'init' if the site is
+        // reactivated later, same as it does on a fresh activation — no
+        // matching schedule() call belongs here.
+        \wp_clear_scheduled_hook(StaleOrderCleaner::CRON_HOOK);
+
         \flush_rewrite_rules();
     }
 

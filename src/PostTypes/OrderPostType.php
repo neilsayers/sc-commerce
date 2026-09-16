@@ -27,6 +27,11 @@ final class OrderPostType implements Hookable
     public const POST_TYPE = 'scc_order';
 
     public const META_STATUS = '_scc_status';
+    // Set whenever META_STATUS changes (Orders\Order::setStatus()), not
+    // just when the post itself is last modified — Orders\StaleOrderCleaner
+    // needs "how long has this order actually been Payment Pending",
+    // which post_modified can't answer (postmeta writes don't touch it).
+    public const META_STATUS_CHANGED_AT = '_scc_status_changed_at';
     public const META_LINE_ITEMS = '_scc_line_items';
     public const META_CURRENCY = '_scc_currency';
     public const META_TOTAL = '_scc_total';
@@ -35,6 +40,7 @@ final class OrderPostType implements Hookable
     public const META_CUSTOMER_NOTES = '_scc_customer_notes';
     public const META_GATEWAY = '_scc_gateway';
     public const META_TRANSACTION_ID = '_scc_transaction_id';
+    public const META_TRACKING_CODE = '_scc_tracking_code';
 
     /**
      * UK-only for now, deliberately — no country field on the checkout

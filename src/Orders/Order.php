@@ -97,6 +97,7 @@ final class Order
         ]);
 
         \update_post_meta($postId, OrderPostType::META_STATUS, OrderPostType::STATUS_CREATED);
+        \update_post_meta($postId, OrderPostType::META_STATUS_CHANGED_AT, \time());
         \update_post_meta($postId, OrderPostType::META_LINE_ITEMS, $lineItems);
         \update_post_meta($postId, OrderPostType::META_CURRENCY, $currency);
         \update_post_meta($postId, OrderPostType::META_TOTAL, $total);
@@ -137,6 +138,20 @@ final class Order
         return $status ?: OrderPostType::STATUS_CREATED;
     }
 
+    /**
+     * When the current status was set — used by Orders\StaleOrderCleaner
+     * to tell "just went to Payment Pending" from "been there a month".
+     * Falls back to the post's own creation time for an order that
+     * predates META_STATUS_CHANGED_AT existing, rather than 0 (which
+     * would make every pre-existing order look infinitely stale).
+     */
+    public function statusChangedAt(): int
+    {
+        $timestamp = \get_post_meta($this->post->ID, OrderPostType::META_STATUS_CHANGED_AT, true);
+
+        return $timestamp !== '' ? (int) $timestamp : (int) \get_post_time('U', true, $this->post);
+    }
+
     public function setStatus(string $status): void
     {
         if (! isset(OrderPostType::STATUSES[$status])) {
@@ -150,6 +165,7 @@ final class Order
         }
 
         \update_post_meta($this->post->ID, OrderPostType::META_STATUS, $status);
+        \update_post_meta($this->post->ID, OrderPostType::META_STATUS_CHANGED_AT, \time());
 
         \do_action('scc_order_status_changed', $this, $status, $previous);
     }
@@ -245,5 +261,20 @@ final class Order
     public function transactionId(): string
     {
         return (string) \get_post_meta($this->post->ID, OrderPostType::META_TRANSACTION_ID, true);
+    }
+
+    /**
+     * A parcel tracking code — filled in by hand by whoever ships the
+     * order (MetaBoxes\OrderDetailsMetaBox), there's no carrier
+     * integration setting this automatically yet.
+     */
+    public function trackingCode(): string
+    {
+        return (string) \get_post_meta($this->post->ID, OrderPostType::META_TRACKING_CODE, true);
+    }
+
+    public function setTrackingCode(string $trackingCode): void
+    {
+        \update_post_meta($this->post->ID, OrderPostType::META_TRACKING_CODE, \sanitize_text_field($trackingCode));
     }
 }

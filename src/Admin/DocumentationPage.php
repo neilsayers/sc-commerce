@@ -223,7 +223,8 @@ final class DocumentationPage implements Hookable
             abandoned/failed attempts are captured too. Manage orders under the <strong>Orders</strong> menu;
             status only ever moves forward automatically via
             PayPal's IPN callback (see Payments below), except Dispatched, which is always set by hand once a
-            parcel actually goes out.
+            parcel actually goes out. The Orders list colour-codes each row by status (a subtle left accent) so
+            they can be scanned without reading every Status cell.
         </p>
         <table class="widefat striped" style="max-width: 500px;">
             <thead><tr><th>Status</th></tr></thead>
@@ -233,6 +234,21 @@ final class DocumentationPage implements Hookable
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <p class="description">
+            An order stuck on "Payment Pending" for a month (PayPal's IPN never arrived — see "Testing locally"
+            below for the most common reason on a dev site) is automatically moved to "Cancelled" by a daily
+            WP-Cron job (<code>Orders\StaleOrderCleaner</code>). It's left there for an admin to trash by hand
+            whenever they're ready — nothing deletes the order itself. "Created" orders (no gateway configured)
+            aren't included, since the shop owner already gets a notification email about those and is expected
+            to follow up manually rather than have them expire.
+        </p>
+
+        <h3>Tracking</h3>
+        <p>
+            The Order Status box has a free-text <strong>Tracking code</strong> field, filled in by hand once a
+            parcel goes out — there's no carrier integration to set this (or to move an order to "Complete" on
+            delivery) automatically yet.
+        </p>
 
         <h3>Checkout fields</h3>
         <p>

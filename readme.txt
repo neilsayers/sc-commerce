@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.6.0
+Stable tag: 0.7.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -44,7 +44,11 @@ Cancelled, Paid, Payment Failed, Complete, Dispatched. Orders aren't created man
 locked out for the type) — only ever via Orders\Order::create(). The checkout form collects a UK delivery address
 (line 1, line 2, town, county, postcode — no country field yet, every order gets a fixed "GB") plus optional order
 notes, all stored on the order alongside its line items. Name, email, address line 1, town and postcode are required
-and validated server-side (postcode against a UK postcode shape), not just via the form's own HTML attributes.
+and validated server-side (postcode against a UK postcode shape), not just via the form's own HTML attributes. The
+Orders list colour-codes each row by status (a subtle left accent), and an order stuck on "Payment Pending" for a
+month is automatically moved to "Cancelled" by a daily WP-Cron job (Orders\StaleOrderCleaner) — left for an admin
+to trash by hand, nothing deletes the order itself. A free-text tracking code field on the order can be filled in
+by hand once a parcel goes out; there's no carrier integration (or automatic "delivered" detection) yet.
 
 **Notifications.** The shop owner is emailed when an order needs attention — paid (confirmed by PayPal's IPN), or
 placed with no payment gateway configured, since that order will never reach "Paid" on its own. Sent to the
@@ -98,6 +102,16 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.7.0 =
+* An order stuck on "Payment Pending" for a month is now automatically moved to "Cancelled" by a daily WP-Cron job
+  (`Orders\StaleOrderCleaner`) — left for an admin to trash by hand, nothing deletes the order itself. Scoped to
+  Payment Pending only; a "Created" order with no gateway configured is a manual order the shop owner's already
+  been emailed about, not something waiting on an external service.
+* The Orders list now colour-codes each row by status — a subtle 10px left accent (dark red Cancelled, red Payment
+  Failed, yellow Created/Payment Pending, light green Paid, dark green Dispatched, purple Complete).
+* Added a free-text tracking code field to the Order Status box, filled in by hand once a parcel goes out. No
+  carrier integration yet (so no automatic "delivered" detection) — a deliberate "manual for now".
 
 = 0.6.0 =
 * **Breaking:** removed "Buy Now" entirely (`[scc_buy_now]`, `scc_buy_now_button()`) — every purchase now goes
