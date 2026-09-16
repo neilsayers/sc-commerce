@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -93,6 +93,11 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.5.1 =
+* Checkout's required fields (name, email, address line 1, town, postcode) now show a red asterisk, with a
+  "* Required" key at the top of the form — a visual cue only; the fields' own `required` attribute is still what
+  tells assistive tech they're mandatory.
 
 = 0.5.0 =
 * Shop owner now gets a notification email for orders that need attention — a paid order (from PayPal's IPN, not

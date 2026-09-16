@@ -292,6 +292,17 @@ function scc_the_order_summary(Basket $basket): void
 }
 
 /**
+ * The red asterisk next to a checkout label — aria-hidden since the
+ * field's own `required` attribute is what actually tells assistive
+ * tech it's mandatory; this is a sighted-user visual cue only, paired
+ * with the "* Required" key printed once at the top of the form.
+ */
+function scc_required_marker(): void
+{
+    echo '<span class="scc-required" aria-hidden="true">*</span>';
+}
+
+/**
  * The checkout form (order summary, address, and payment) plus, via
  * query string once a customer's been redirected here — from a
  * gateway or from CheckoutController::checkout() — order status/
@@ -329,28 +340,30 @@ function scc_the_checkout(): void
         <?php wp_nonce_field('scc_checkout'); ?>
         <input type="hidden" name="action" value="scc_checkout">
 
+        <p class="scc-required-key"><?php scc_required_marker(); ?> Required</p>
+
         <p>
-            <label>Name<br><input type="text" name="customer_name" required></label>
+            <label>Name <?php scc_required_marker(); ?><br><input type="text" name="customer_name" required></label>
         </p>
         <p>
-            <label>Email<br><input type="email" name="customer_email" required></label>
+            <label>Email <?php scc_required_marker(); ?><br><input type="email" name="customer_email" required></label>
         </p>
 
         <h3>Delivery address</h3>
         <p>
-            <label>Address line 1<br><input type="text" name="address_line1" required></label>
+            <label>Address line 1 <?php scc_required_marker(); ?><br><input type="text" name="address_line1" required></label>
         </p>
         <p>
             <label>Address line 2 <span class="scc-optional">(optional)</span><br><input type="text" name="address_line2"></label>
         </p>
         <p>
-            <label>Town / city<br><input type="text" name="address_town" required></label>
+            <label>Town / city <?php scc_required_marker(); ?><br><input type="text" name="address_town" required></label>
         </p>
         <p>
             <label>County <span class="scc-optional">(optional)</span><br><input type="text" name="address_county"></label>
         </p>
         <p>
-            <label>Postcode<br><input type="text" name="address_postcode" pattern="[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}" title="Enter a valid UK postcode" required></label>
+            <label>Postcode <?php scc_required_marker(); ?><br><input type="text" name="address_postcode" pattern="[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}" title="Enter a valid UK postcode" required></label>
         </p>
 
         <p>

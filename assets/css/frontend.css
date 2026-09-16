@@ -70,3 +70,12 @@
 	font-weight: normal;
 	color: #666;
 }
+
+.scc-required {
+	color: #d63638;
+}
+
+.scc-required-key {
+	font-size: 0.875rem;
+	color: #666;
+}
