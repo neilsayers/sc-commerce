@@ -12,6 +12,7 @@ use SCCommerce\Frontend\BasketRestController;
 use SCCommerce\Frontend\CheckoutController;
 use SCCommerce\Frontend\OrderStatusRestController;
 use SCCommerce\Frontend\ProductContent;
+use SCCommerce\Frontend\ProductSchema;
 use SCCommerce\Frontend\ProductsRestController;
 use SCCommerce\Frontend\Shortcodes;
 use SCCommerce\Gateways\PayPal\PayPalGateway;
@@ -72,6 +73,7 @@ final class Plugin
             new OrderStatusRestController(),
             new Shortcodes(),
             new ProductContent(),
+            new ProductSchema($this->settings),
             new Assets(),
             new SettingsMenu(),
             new DocumentationPage(),

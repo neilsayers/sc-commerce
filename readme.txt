@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.10.0
+Stable tag: 0.11.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -18,7 +18,9 @@ screens and plugin ecosystem are more than the site will ever use.
 **Products.** A "Product" post type with a price, SKU and simple/variable type. Variable products currently store a flat
 list of variations (label, price, SKU) as provision for a future attribute-matrix UI — see "Variable products" below.
 Products belong to a hierarchical "Product Types" taxonomy for browsing/grouping. `[scc_products]` lists them as a
-card grid by default, or `layout="list"` for a compact one-row-per-product table.
+card grid by default, or `layout="list"` for a compact one-row-per-product table. Every product's own page
+automatically gets `schema.org/Product` structured data (JSON-LD) — nothing to configure, built from the same
+data the page itself renders.
 
 **Basket.** A logged-in visitor's basket lives in their own user meta; a guest's lives entirely in a cookie (the basket
 itself, JSON-encoded, not a server-side session token) — see Basket\Basket's class doc. Adding an item is AJAX
@@ -105,6 +107,16 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.11.0 =
+* Fixed the products grid: a product's featured image had no `max-width`/`height` styling at all, so on a theme
+  without its own image reset it rendered at native size and spilled over neighbouring cards instead of scaling
+  to fit. While fixing it, hardened `frontend.css` more generally (a scoped `box-sizing: border-box`, a plain
+  button/input baseline) so the plugin looks considered on a bare theme with no CSS reset of its own, rather than
+  leaning on the host site to supply one. Grid cards also got a border/padding and bottom-aligned buy boxes.
+* Added automatic `schema.org/Product` structured data (JSON-LD) to every product's single-view page —
+  name/description/image/SKU/price, a plain `Offer` for a simple product or an `AggregateOffer`
+  (`lowPrice`/`highPrice`) for a variable one. Nothing to configure.
 
 = 0.10.0 =
 * Added a dev-only test suite (`composer.json`'s `require-dev` — never loaded at runtime, doesn't change the

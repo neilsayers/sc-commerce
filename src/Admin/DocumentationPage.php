@@ -90,6 +90,7 @@ final class DocumentationPage implements Hookable
             <?php $this->renderFunctionSection(); ?>
             <?php $this->renderRestSection(); ?>
             <?php $this->renderShortcodeSection(); ?>
+            <?php $this->renderSchemaSection(); ?>
             <?php $this->renderOrdersSection(); ?>
             <?php $this->renderPaymentsSection(); ?>
         </div>
@@ -211,6 +212,27 @@ final class DocumentationPage implements Hookable
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <?php
+    }
+
+    private function renderSchemaSection(): void
+    {
+        ?>
+        <h2>Structured data (schema.org)</h2>
+        <p>
+            Every product's own single-view page automatically gets a <code>schema.org/Product</code> block in
+            <code>&lt;head&gt;</code> as JSON-LD (<code>Frontend\ProductSchema</code>) — name, description, image,
+            SKU and price, built from the same <code>Products\Product</code> data everything else on this page
+            reads, so it can never disagree with what's shown on the page itself. Nothing to configure; it's there
+            as soon as the product is published.
+        </p>
+        <p class="description">
+            A simple product gets a plain <code>Offer</code> (one price). A variable product gets an
+            <code>AggregateOffer</code> instead — <code>lowPrice</code>/<code>highPrice</code> across its
+            variations, since schema.org has no single "the" price for something sold in several variants.
+            Availability is always reported as <code>InStock</code> — this plugin doesn't track stock levels, so
+            there's no signal to say otherwise.
+        </p>
         <?php
     }
 

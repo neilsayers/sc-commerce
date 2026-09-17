@@ -1,7 +1,81 @@
+/**
+ * This stylesheet is written to hold up on a bare theme with no CSS
+ * reset of its own (this plugin drops into any WordPress site as-is —
+ * see the plugin's own house rules) rather than assuming the host
+ * provides basics like img { max-width: 100% } or box-sizing:
+ * border-box. Everything below is scoped under a handful of known
+ * top-level classes (.scc-product, .scc-products-list,
+ * .scc-basket-table, .scc-order-summary, .scc-checkout-form,
+ * .scc-variant-selector, .scc-mini-basket) precisely so it stays
+ * self-contained and never leaks a reset onto the rest of the page.
+ */
+.scc-product,
+.scc-product *,
+.scc-products-list,
+.scc-products-list *,
+.scc-basket-table,
+.scc-basket-table *,
+.scc-order-summary,
+.scc-order-summary *,
+.scc-checkout-form,
+.scc-checkout-form *,
+.scc-variant-selector,
+.scc-variant-selector *,
+.scc-mini-basket,
+.scc-mini-basket * {
+	box-sizing: border-box;
+}
+
+/**
+ * The actual bug this was written to fix: a product's featured image
+ * (scc_the_product()'s <a><?php echo get_the_post_thumbnail(...) ?></a>)
+ * had nothing at all constraining its size, so on a theme without its
+ * own img reset it rendered at native width — wider than a 220px grid
+ * column — and spilled over neighbouring cards instead of scaling
+ * down to fit.
+ */
+.scc-product img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+}
+
+.scc-product {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid #e5e5e5;
+	border-radius: 6px;
+	padding: 1rem;
+}
+
+.scc-product-name {
+	margin: 0.75rem 0 0.25rem;
+	font-size: 1.1rem;
+	line-height: 1.3;
+}
+
+.scc-product-excerpt {
+	flex-grow: 1;
+	color: #555;
+	font-size: 0.9rem;
+}
+
 .scc-product-buy-box {
 	margin-top: 1.5rem;
 	padding-top: 1rem;
 	border-top: 1px solid #e5e5e5;
+}
+
+/**
+ * Only inside the grid card: pushes the buy box to the bottom of the
+ * card regardless of how long that card's excerpt is, so a row of
+ * cards lines its "Add to basket" actions up evenly. Left as a plain
+ * margin-top everywhere else (e.g. Frontend\ProductContent appending
+ * this to a single product's the_content, well outside any flex
+ * container) since margin: auto only does anything inside one.
+ */
+.scc-product .scc-product-buy-box {
+	margin-top: auto;
 }
 
 .scc-product-price {
@@ -19,6 +93,52 @@
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
+}
+
+/**
+ * A plain <button>/<input> rides on whatever the browser's default UI
+ * chrome looks like — fine on nothing, but the point of this pass is
+ * that dropping this plugin into a themed site should look considered
+ * without that theme doing any work. Deliberately unbranded (a
+ * near-black fill, not a colour this plugin has no business guessing)
+ * so it reads as "a real button" without clashing with a client's
+ * actual brand colour — easy to override with a single, more specific
+ * site-theme rule if a real palette exists.
+ */
+.scc-product-actions button,
+.scc-basket-table button,
+.scc-products-list button,
+.scc-checkout-form button,
+.scc-variant-selector button {
+	font: inherit;
+	cursor: pointer;
+	padding: 0.5em 1.1em;
+	border: 1px solid #1a1a1a;
+	border-radius: 4px;
+	background: #1a1a1a;
+	color: #fff;
+	line-height: 1.4;
+}
+
+.scc-product-actions button:hover,
+.scc-basket-table button:hover,
+.scc-products-list button:hover,
+.scc-checkout-form button:hover,
+.scc-variant-selector button:hover {
+	background: #333;
+	border-color: #333;
+}
+
+.scc-product-actions input,
+.scc-basket-table input,
+.scc-products-list input,
+.scc-checkout-form input,
+.scc-checkout-form textarea,
+.scc-variant-selector select {
+	font: inherit;
+	padding: 0.45em 0.6em;
+	border: 1px solid #ccc;
+	border-radius: 4px;
 }
 
 .scc-basket-table {
@@ -75,7 +195,7 @@
 }
 
 .scc-products-list-action input[type="number"] {
-	width: 3em;
+	width: 3.5em;
 }
 
 .scc-order-summary {
