@@ -8,6 +8,7 @@ use SCCommerce\Gateways\PayPal\PayPalGateway;
 use SCCommerce\Orders\Order;
 use SCCommerce\PostTypes\OrderPostType;
 use SCCommerce\Settings\Settings;
+use SCCommerce\Support\CustomerValidator;
 
 /**
  * Handles "Proceed to checkout" from the basket via a classic
@@ -44,7 +45,12 @@ final class CheckoutController implements Hookable
         \check_admin_referer('scc_checkout');
 
         $customer = $this->customerFromRequest();
-        $invalidField = $this->firstInvalidField($customer);
+
+        // The HTML form already marks these `required`, but that's only
+        // a UX nicety — anyone posting straight to admin-post.php (or
+        // with JS/HTML tampered with) can submit blanks, so this is the
+        // actual gate.
+        $invalidField = CustomerValidator::firstInvalidField($customer);
 
         if ($invalidField) {
             $this->redirectToCheckoutWithError($invalidField);
@@ -78,58 +84,6 @@ final class CheckoutController implements Hookable
             'address_county' => \sanitize_text_field(\wp_unslash($_POST['address_county'] ?? '')),
             'address_postcode' => \sanitize_text_field(\wp_unslash($_POST['address_postcode'] ?? '')),
         ];
-    }
-
-    /**
-     * The HTML form already marks these `required`, but that's only a
-     * UX nicety — anyone posting straight to admin-post.php (or with
-     * JS/HTML tampered with) can submit blanks, so this is the actual
-     * gate. Checked in a fixed order and only the first failure is
-     * reported, since the checkout page has no way to redisplay the
-     * submitted values or highlight several fields at once — one
-     * targeted notice per re-attempt is simpler than a multi-error
-     * summary here would be worth building.
-     *
-     * @param array{name: string, email: string, address_line1: string, address_town: string, address_postcode: string} $customer
-     */
-    private function firstInvalidField(array $customer): ?string
-    {
-        if ($customer['name'] === '') {
-            return 'name';
-        }
-
-        if ($customer['email'] === '' || ! \is_email($customer['email'])) {
-            return 'email';
-        }
-
-        if ($customer['address_line1'] === '') {
-            return 'address_line1';
-        }
-
-        if ($customer['address_town'] === '') {
-            return 'address_town';
-        }
-
-        if ($customer['address_postcode'] === '' || ! self::isValidUkPostcode($customer['address_postcode'])) {
-            return 'address_postcode';
-        }
-
-        return null;
-    }
-
-    /**
-     * address_line2/address_county stay unvalidated — both are marked
-     * optional on the checkout form (see scc_the_checkout()), so an
-     * empty value there is correct input, not missing input.
-     *
-     * Standard UK postcode shape (outward code + inward code); doesn't
-     * check against Royal Mail's actual allocated code list, just that
-     * it's shaped like a postcode — matching the fixed GB-only address
-     * this plugin stores (PostTypes\OrderPostType::META_ADDRESS_COUNTRY).
-     */
-    private static function isValidUkPostcode(string $postcode): bool
-    {
-        return \preg_match('/^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i', \trim($postcode)) === 1;
     }
 
     private function redirectToCheckoutWithError(string $field): void

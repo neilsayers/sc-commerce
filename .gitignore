@@ -1,1 +1,6 @@
 .DS_Store
+
+# Dev-only test tooling (composer.json's require-dev) — never shipped,
+# never needed to run the plugin itself. See tests/README.md.
+# composer.lock is committed on purpose, for reproducible test runs.
+/vendor/

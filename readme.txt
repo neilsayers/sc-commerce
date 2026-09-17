@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.9.0
+Stable tag: 0.10.0
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -105,6 +105,15 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.10.0 =
+* Added a dev-only test suite (`composer.json`'s `require-dev` — never loaded at runtime, doesn't change the
+  no-build-step/no-runtime-dependency promise). A WP-independent unit tier covers `Support\Money` and the new
+  `Support\CustomerValidator`; a WordPress-integration tier covers `Orders\Order` and `Orders\StaleOrderCleaner`.
+  See `tests/README.md`.
+* Extracted the checkout form's required-field/UK-postcode validation out of `Frontend\CheckoutController` into
+  `Support\CustomerValidator` — same behaviour, now plain WP-independent logic (like `Support\Money`) instead of
+  private methods on a class that also does nonce checks and redirects.
 
 = 0.9.0 =
 * A variable product's single-view page now has a real variant picker instead of a placeholder note — choosing an

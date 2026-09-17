@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Integration tier: Orders\Order, Orders\StaleOrderCleaner — real
+  WordPress, real (disposable) database, each test wrapped in a
+  transaction WP_UnitTestCase rolls back afterward. Needs a test
+  database set up first — see tests/README.md. Run with:
+
+      vendor/bin/phpunit -c phpunit-integration.xml.dist
+-->
+<phpunit
+    bootstrap="tests/Integration/bootstrap.php"
+    colors="true"
+>
+    <testsuites>
+        <testsuite name="integration">
+            <directory suffix="Test.php">tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

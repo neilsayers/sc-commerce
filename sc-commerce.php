@@ -4,7 +4,7 @@
  * Plugin Name:       SC Commerce
  * Plugin URI:        https://github.com/neilsayers/sc-commerce
  * Description:       A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
- * Version:           0.9.0
+ * Version:           0.10.0
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Author:            Neil Sayers
@@ -19,7 +19,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('SCC_VERSION', '0.9.0');
+define('SCC_VERSION', '0.10.0');
 define('SCC_FILE', __FILE__);
 define('SCC_PATH', \plugin_dir_path(__FILE__));
 define('SCC_URL', \plugin_dir_url(__FILE__));

@@ -18,10 +18,21 @@ competitor — for client sites that don't need that much machinery. Developed/e
 3. **No build step, no Composer dependency.** The whole point of this plugin (and its house style, shared with
    `sc-events-manager`/`sc-room-bookings`) is that it can be copied straight into `wp-content/plugins/` on any site
    and just work. Don't introduce a bundler, autoload via Composer, or add a runtime PHP/JS dependency without
-   discussing it first.
+   discussing it first. `composer.json` is dev-only (the test suite, see below) — it's never loaded at runtime and
+   doesn't change this.
 4. **Orders are a record of intent, not just successful payment.** Order::create() always runs before any gateway
    redirect (see its class doc) — don't "optimise" this by only creating an order after payment succeeds, that's a
    deliberate requirement, not an oversight.
+
+## Tests
+
+`tests/README.md` has the full setup, but in short: `vendor/bin/phpunit` runs the WP-independent unit tier
+(`Support\Money`, `Support\CustomerValidator`) with just `composer install` — no WordPress or database needed.
+`vendor/bin/phpunit -c phpunit-integration.xml.dist` runs the `Orders\Order`/`Orders\StaleOrderCleaner` tier, which
+does need a real (disposable) WordPress test database — see the README for the one-time setup against this site's
+own Docker stack. Pure, WP-independent logic (like `Support\Money`/`Support\CustomerValidator`) is deliberately
+factored out specifically so it's unit-testable without a WP bootstrap — keep that pattern for new logic where it
+fits, rather than leaving everything entangled in classes that also do WordPress I/O.
 
 ## Repo
 

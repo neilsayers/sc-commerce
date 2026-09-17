@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Unit tier: pure logic only (Support\Money, Support\CustomerValidator)
+  — no WordPress, no database. This is what `vendor/bin/phpunit` runs
+  with no arguments, and always works with just `composer install`.
+  See tests/README.md for the Integration tier (Orders\Order and
+  friends), which needs a WordPress test database and its own config.
+-->
+<phpunit
+    bootstrap="tests/Unit/bootstrap.php"
+    colors="true"
+>
+    <testsuites>
+        <testsuite name="unit">
+            <directory suffix="Test.php">tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
