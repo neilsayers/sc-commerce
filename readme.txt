@@ -4,7 +4,7 @@ Tags: ecommerce, shop, basket, paypal, orders
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.11.0
+Stable tag: 0.11.1
 License: All Rights Reserved
 
 A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
@@ -107,6 +107,9 @@ screen, not just here.
 4. Add some products, then visit one on the front end.
 
 == Changelog ==
+
+= 0.11.1 =
+* Sites running this plugin now get the normal "Update available" notice in wp-admin, served from this plugin's GitHub Releases.
 
 = 0.11.0 =
 * Fixed the products grid: a product's featured image had no `max-width`/`height` styling at all, so on a theme

@@ -4,7 +4,7 @@
  * Plugin Name:       SC Commerce
  * Plugin URI:        https://github.com/neilsayers/sc-commerce
  * Description:       A deliberately small ecommerce system for WordPress — products, a basket, PayPal checkout and orders — for sites that don't need WooCommerce's weight.
- * Version:           0.11.0
+ * Version:           0.11.1
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Author:            Neil Sayers
@@ -19,7 +19,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('SCC_VERSION', '0.11.0');
+define('SCC_VERSION', '0.11.1');
 define('SCC_FILE', __FILE__);
 define('SCC_PATH', \plugin_dir_path(__FILE__));
 define('SCC_URL', \plugin_dir_url(__FILE__));
@@ -48,5 +48,19 @@ define('SCC_URL', \plugin_dir_url(__FILE__));
 \register_deactivation_hook(__FILE__, [Setup\Activator::class, 'deactivate']);
 
 require SCC_PATH.'src/Frontend/template-functions.php';
+
+/*
+ * Not on WordPress.org, so the Plugins screen's "Update available" is
+ * pointed at this plugin's own GitHub Releases instead (Plugin Update
+ * Checker, vendored in lib/ — no build step). A release is published
+ * by .github/workflows/release.yml whenever the Version above changes;
+ * enableReleaseAssets() makes sites install that workflow's zip, which
+ * has the right folder name, rather than GitHub's source archive.
+ */
+require_once SCC_PATH.'lib/plugin-update-checker/plugin-update-checker.php';
+
+\YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker('https://github.com/neilsayers/sc-commerce/', SCC_FILE, 'sc-commerce')
+    ->getVcsApi()
+    ->enableReleaseAssets();
 
 Plugin::instance()->boot();
